@@ -14,8 +14,8 @@ function AdminDashboard() {
   if (!currentUser || currentUser.role !== "admin") return <Navigate to="/login" replace />;
 
   return (
-    <div style={{ display: "flex", height: "100%" }}>
-      <aside style={{ width: 260, background: "#d6f5d6", height: "100%", display: "flex", flexDirection: "column", borderRight: "1px solid #ccc" }}>
+    <div style={{ display: "flex" }}>
+      <aside style={{ width: 260, background: "#d6f5d6", minHeight: "100vh", display: "flex", flexDirection: "column", borderRight: "1px solid #ccc" }}>
         <h3 style={{ marginTop: 0, fontSize: 22, padding: "20px 20px 0 20px" }}>Admin</h3>
         <nav style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 18, padding: 20, flexGrow: 1 }}>
           <Link to="students">Students</Link>
