@@ -1,7 +1,16 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useData } from "../context/DataContext";
 import "../css/Header.css";
 
 const Header = () => {
+  const { currentUser, logout } = useData();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <>
       <header className="header">
@@ -19,9 +28,9 @@ const Header = () => {
         </div>
 
         <nav className="nav-links">
-          <Link to="/">Home</Link>
-          <Link to="/signup">Sign Up</Link>
-          <Link to="/login">Login</Link>
+          {currentUser ? (
+            <button onClick={handleLogout} className="logout-button">Logout</button>
+          ) : null}
         </nav>
       </header>
     </>

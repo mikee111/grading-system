@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useData } from "../context/DataContext";
+import { useFormVisibility } from "../context/FormVisibilityContext";
 import "../styles/Auth.css";
 
 function LoginPage() {
@@ -10,6 +11,7 @@ function LoginPage() {
   });
   const [error, setError] = useState("");
   const { login } = useData();
+  const { setShowLogin } = useFormVisibility();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -28,7 +30,7 @@ function LoginPage() {
       if (user.role === "admin") {
         navigate("/admin/students");
       } else {
-        navigate("/");
+        setShowLogin(false);
       }
     } else {
       setError("Invalid email or password. Please try again.");
@@ -39,7 +41,7 @@ function LoginPage() {
     <div className="auth-container">
       <form className="auth-form" onSubmit={handleSubmit}>
         <h2>Login</h2>
-        <div className="form-group">
+        <div className="admin-form-group">
           <label>Email:</label>
           <input
             type="email"
@@ -49,7 +51,7 @@ function LoginPage() {
             required
           />
         </div>
-        <div className="form-group">
+        <div className="admin-form-group">
           <label>Password:</label>
           <input
             type="password"
@@ -59,13 +61,11 @@ function LoginPage() {
             required
           />
         </div>
-        {error && <span className="error">{error}</span>}
-        <button type="submit" className="auth-button">
+        {error && <span className="admin-error">{error}</span>}
+        <button type="submit" className="admin-form-button">
           Login
         </button>
-        <p>
-          Don't have an account? <Link to="/signup">Sign Up</Link>
-        </p>
+
       </form>
     </div>
   );

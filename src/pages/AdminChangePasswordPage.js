@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useData } from "../context/DataContext";
+import "../css/AdminForms.css";
 
 function AdminChangePasswordPage() {
   const { currentUser, changePassword } = useData();
@@ -31,13 +32,13 @@ function AdminChangePasswordPage() {
   };
 
   return (
-    <div className="admin-profile-container">
+    <div className="admin-form-container">
       <h2>Change Password</h2>
 
-      <div className="profile-section">
+      <div className="admin-form">
         <h3>Change Password</h3>
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
+          <div className="admin-form-group">
             <label>Current Password:</label>
             <input
               type="password"
@@ -46,7 +47,7 @@ function AdminChangePasswordPage() {
               required
             />
           </div>
-          <div className="form-group">
+          <div className="admin-form-group">
             <label>New Password:</label>
             <input
               type="password"
@@ -55,7 +56,7 @@ function AdminChangePasswordPage() {
               required
             />
           </div>
-          <div className="form-group">
+          <div className="admin-form-group">
             <label>Confirm New Password:</label>
             <input
               type="password"
@@ -68,8 +69,8 @@ function AdminChangePasswordPage() {
         </form>
       </div>
 
-      {message && <p className="success-message">{message}</p>}
-      {error && <p className="error-message">{error}</p>}
+      {message && <p className="admin-message">{message}</p>}
+      {error && <p className="admin-error">{error}</p>}
     </div>
   );
 }

@@ -1,0 +1,66 @@
+.admin-form-container {
+  padding: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-form-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.admin-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-form-group label {
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.admin-form-group input,
+.admin-form-group select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.admin-form button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.admin-form button:hover {
+  background-color: #0056b3;
+}
+
+.admin-message {
+  color: green;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.admin-error {
+  color: red;
+  text-align: center;
+  margin-top: 15px;
+}

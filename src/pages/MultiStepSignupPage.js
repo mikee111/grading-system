@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useFormVisibility } from '../context/FormVisibilityContext';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import './MultiStepSignupPage.css';
 
 function MultiStepSignupPage() {
   const { signUp } = useData();
+  const { setShowSignup, setShowLogin } = useFormVisibility();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -57,7 +59,8 @@ function MultiStepSignupPage() {
       form.role
     );
     if (success) {
-      navigate('/login');
+      setShowSignup(false);
+      setShowLogin(true);
     } else {
       setError('An error occurred during sign-up. Please try again.');
     }
@@ -68,7 +71,7 @@ function MultiStepSignupPage() {
       <form className="multi-step-signup-form" onSubmit={handleSubmit}>
         <h2>Sign Up</h2>
         {step === 1 && (
-          <div>
+          <div className="admin-form-group">
             <h3>Step 1: Personal Information</h3>
             <label>
               First Name:
@@ -103,7 +106,7 @@ function MultiStepSignupPage() {
           </div>
         )}
         {step === 2 && (
-          <div>
+          <div className="admin-form-group">
             <h3>Step 2: Account Details</h3>
             <label>
               Username:
@@ -138,7 +141,7 @@ function MultiStepSignupPage() {
           </div>
         )}
         {step === 3 && (
-          <div>
+          <div className="admin-form-group">
             <h3>Step 3: Additional Information</h3>
             <label>
               Address:
@@ -171,9 +174,9 @@ function MultiStepSignupPage() {
         )}
         {error && <p className="error-message">{error}</p>}
         <div className="form-navigation-buttons">
-          {step > 1 && <button type="button" onClick={handleBack}>Back</button>}
-          {step < 3 && <button type="button" onClick={handleNext}>Next</button>}
-          {step === 3 && <button type="submit">Submit</button>}
+          {step > 1 && <button type="button" onClick={handleBack} className="admin-form-button">Back</button>}
+          {step < 3 && <button type="button" onClick={handleNext} className="admin-form-button">Next</button>}
+          {step === 3 && <button type="submit" className="admin-form-button">Submit</button>}
         </div>
       </form>
     </div>

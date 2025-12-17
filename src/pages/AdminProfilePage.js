@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useData } from "../context/DataContext";
-import { useNavigate } from "react-router-dom";
+import "../css/AdminForms.css";
 
 function AdminProfilePage() {
   const { currentUser, updateUserProfile } = useData();
-  const navigate = useNavigate();
+
 
   const [profileData, setProfileData] = useState({
     firstName: currentUser.firstName,
@@ -35,13 +35,13 @@ function AdminProfilePage() {
   };
 
   return (
-    <div className="admin-profile-container">
+    <div className="admin-form-container">
       <h2>Admin Profile</h2>
 
-      <div className="profile-section">
+      <div className="admin-form">
         <h3>Edit Profile</h3>
         <form onSubmit={handleProfileSubmit}>
-          <div className="form-group">
+          <div className="admin-form-group">
             <label>First Name:</label>
             <input
               type="text"
@@ -50,7 +50,7 @@ function AdminProfilePage() {
               onChange={handleProfileChange}
             />
           </div>
-          <div className="form-group">
+          <div className="admin-form-group">
             <label>Last Name:</label>
             <input
               type="text"
@@ -59,7 +59,7 @@ function AdminProfilePage() {
               onChange={handleProfileChange}
             />
           </div>
-          <div className="form-group">
+          <div className="admin-form-group">
             <label>Email:</label>
             <input
               type="email"
@@ -72,8 +72,8 @@ function AdminProfilePage() {
         </form>
       </div>
 
-      {message && <p className="success-message">{message}</p>}
-      {error && <p className="error-message">{error}</p>}
+      {message && <p className="admin-message">{message}</p>}
+      {error && <p className="admin-error">{error}</p>}
     </div>
   );
 }
