@@ -1,0 +1,130 @@
+/* HomePage.css - Professional Styling */
+
+:root {
+  --primary-color: #4CAF50;
+  --secondary-color: #3F51B5;
+  --text-color: #333333;
+  --light-text-color: #666666;
+  --background-light: #f8f8f8;
+  --background-dark: #2c3e50;
+  --header-bg: #2c3e50;
+  --footer-bg: #ecf0f1;
+  --border-color: #dddddd;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-color);
+  background-color: var(--background-light);
+}
+
+.homepage-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.homepage-header {
+  background-color: var(--header-bg);
+  padding: 20px 40px;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.homepage-header h1 {
+  margin: 0;
+  font-size: 1.8em;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.homepage-header nav a {
+  color: white;
+  margin-left: 25px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.0em;
+  transition: color 0.3s ease;
+}
+
+.homepage-header nav a:hover {
+  color: var(--primary-color);
+}
+
+.homepage-main {
+  flex: 1;
+  padding: 60px 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 50px;
+}
+
+.homepage-main section {
+  background-color: white;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-align: left;
+}
+
+.homepage-main h2 {
+  color: var(--primary-color);
+  font-size: 2.2em;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--primary-color);
+  padding-bottom: 10px;
+  display: inline-block;
+}
+
+.homepage-main p {
+  color: var(--light-text-color);
+  font-size: 1.05em;
+  line-height: 1.7;
+  margin-bottom: 0;
+}
+
+.homepage-footer {
+  background-color: var(--footer-bg);
+  padding: 25px 20px;
+  color: var(--light-text-color);
+  font-size: 0.9em;
+  border-top: 1px solid var(--border-color);
+  margin-top: 50px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .homepage-header {
+    flex-direction: column;
+    padding: 15px 20px;
+  }
+
+  .homepage-header nav a {
+    margin: 10px 10px 0;
+  }
+
+  .homepage-main {
+    padding: 40px 15px;
+    gap: 30px;
+  }
+
+  .homepage-main section {
+    padding: 30px;
+  }
+
+  .homepage-main h2 {
+    font-size: 1.8em;
+  }
+
+  .homepage-main p {
+    font-size: 1em;
+  }
+}
