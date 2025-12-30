@@ -28,7 +28,9 @@ function LoginPage() {
     const user = login(formData.email, formData.password);
     if (user) {
       if (user.role === "admin") {
-        navigate("/admin/students");
+        navigate("/admin");
+      } else if (user.role === "teacher") {
+        navigate("/teacher");
       } else {
         setShowLogin(false);
       }

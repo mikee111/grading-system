@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set Sample Data</title>
+</head>
+<body>
+    <h2>Click the button below to add sample data to localStorage</h2>
+    <button onclick="addSampleData()">Add Sample Data</button>
+    <p id="status"></p>
+    
+    <script>
+        function addSampleData() {
+            const sampleStudents = [
+                { id: 's1', firstName: 'John', lastName: 'Doe', course: 'Computer Science', year: '3', subjects: ['Mathematics', 'Science'] },
+                { id: 's2', firstName: 'Jane', lastName: 'Smith', course: 'Biology', year: '2', subjects: ['Mathematics'] }
+            ];
+
+            const sampleSubjects = [
+                { id: 'sub1', name: 'Mathematics', gradeLevel: 'Advanced' },
+                { id: 'sub2', name: 'Science', gradeLevel: 'Intermediate' }
+            ];
+
+            const sampleGrades = [
+                { studentId: 's1', subject: 'Mathematics', midterm: '85', midtermEq: '1.5', finals: '90', finalsEq: '1.0', rating: '1.25', status: 'Passed' },
+                { studentId: 's1', subject: 'Science', midterm: '88', midtermEq: '1.25', finals: '92', finalsEq: '1.5', rating: '1.38', status: 'Passed' },
+                { studentId: 's2', subject: 'Mathematics', midterm: '78', midtermEq: '2.75', finals: '82', finalsEq: '2.25', rating: '2.50', status: 'Passed' }
+            ];
+
+            localStorage.setItem('studentsData', JSON.stringify(sampleStudents));
+            localStorage.setItem('subjectsData', JSON.stringify(sampleSubjects));
+            localStorage.setItem('gradesData', JSON.stringify(sampleGrades));
+            
+            document.getElementById('status').textContent = 'Sample data has been added to localStorage!';
+            document.getElementById('status').style.color = 'green';
+            
+            setTimeout(() => {
+                window.close();
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

@@ -13,8 +13,14 @@ function AdminRoleManagementPage() {
     setNewRole(e.target.value);
   };
 
-  const handleUserSelect = (e) => {
-    setSelectedUserId(e.target.value);
+  const handleEditClick = (user) => {
+    if (user.id === "admin1") {
+      setError("Default admin role cannot be changed.");
+      setMessage("");
+      return;
+    }
+    setSelectedUserId(user.id);
+    setNewRole(user.role === "admin" || user.role === "teacher" ? user.role : "teacher");
     setError("");
     setMessage("");
   };
@@ -24,7 +30,7 @@ function AdminRoleManagementPage() {
     setError("");
     setMessage("");
     if (!selectedUserId) {
-      setError("Please select a user.");
+      setError("Please choose a user to edit.");
       return;
     }
     try {
@@ -38,33 +44,56 @@ function AdminRoleManagementPage() {
   return (
     <div className="admin-form-container">
       <h2>Role Management</h2>
-      <form onSubmit={handleSubmit} className="admin-form">
-        <div className="admin-form-group">
-          <label>Select User:</label>
-          <select
-            onChange={handleUserSelect}
-            value={selectedUserId}
-          >
-            <option value="">-- Select a User --</option>
+      <div className="admin-form">
+        <table border="1" cellPadding="8" style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.firstName} {user.lastName} ({user.email})
-              </option>
+              <tr key={user.id}>
+                <td>{user.firstName} {user.lastName}</td>
+                <td>{user.email}</td>
+                <td>{user.role}</td>
+                <td>
+                  {user.id === "admin1" ? (
+                    <span>Default admin (locked)</span>
+                  ) : (
+                    <button type="button" onClick={() => handleEditClick(user)}>
+                      Edit
+                    </button>
+                  )}
+                </td>
+              </tr>
             ))}
-          </select>
-        </div>
-        <div className="admin-form-group">
-          <label>New Role:</label>
-          <select
-            onChange={handleRoleChange}
-            value={newRole}
-          >
-            <option value="student">Student</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <button type="submit">Update Role</button>
-      </form>
+            {users.length === 0 && (
+              <tr>
+                <td colSpan="4" style={{ textAlign: "center" }}>
+                  No users found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        {selectedUserId && (
+          <form onSubmit={handleSubmit} style={{ marginTop: "16px", display: "flex", gap: 12, alignItems: "center" }}>
+            <div className="admin-form-group" style={{ margin: 0 }}>
+              <label style={{ marginRight: 8 }}>New Role:</label>
+              <select onChange={handleRoleChange} value={newRole}>
+                <option value="admin">Admin</option>
+                <option value="teacher">Teacher</option>
+              </select>
+            </div>
+            <button type="submit">Update Role</button>
+          </form>
+        )}
+      </div>
 
       {message && <p className="admin-message">{message}</p>}
       {error && <p className="admin-error">{error}</p>}

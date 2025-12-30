@@ -10,11 +10,17 @@ import MultiStepSignupPage from './pages/MultiStepSignupPage';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import AdminDashboard from './pages/AdminDashboard';
+import TeacherDashboard from './pages/TeacherDashboard';
 
 function App() {
   return (
     <DataProvider>
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <FormVisibilityProvider>
           <AppContent />
         </FormVisibilityProvider>
@@ -24,9 +30,11 @@ function App() {
 }
 
 function AppContent() {
-  const { currentUser } = useData();
+  const { currentUser, isLoading } = useData();
   const location = useLocation();
   const showHeader = location.pathname !== '/';
+
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -41,6 +49,12 @@ function AppContent() {
             <Route path="/admin/*" element={<AdminDashboard />} />
           ) : (
             <Route path="/admin/*" element={<Navigate to="/login" replace />} />
+          )}
+
+          {currentUser && currentUser.role === 'teacher' ? (
+            <Route path="/teacher" element={<TeacherDashboard />} />
+          ) : (
+            <Route path="/teacher" element={<Navigate to="/login" replace />} />
           )}
         </Routes>
       </div>

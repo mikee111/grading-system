@@ -5,13 +5,13 @@ function SubjectsPage() {
   const [form, setForm] = useState({ id: "", name: "", gradeLevel: "" });
   const [editingIndex, setEditingIndex] = useState(null);
 
-  // Load subjects
+
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("subjectsData")) || [];
     setSubjects(saved);
   }, []);
 
-  // Save subjects to localStorage
+
   useEffect(() => {
     localStorage.setItem("subjectsData", JSON.stringify(subjects));
   }, [subjects]);
@@ -27,12 +27,12 @@ function SubjectsPage() {
     let updated;
 
     if (editingIndex !== null) {
-      // Update subject
+
       updated = [...subjects];
       updated[editingIndex] = form;
       setEditingIndex(null);
     } else {
-      // Add new subject ONLY to subjects list, NOT to students
+
       updated = [...subjects, form];
     }
 

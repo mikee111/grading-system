@@ -10,6 +10,19 @@ function AdminChangePasswordPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const getPasswordStrength = (value) => {
+    if (!value) return { label: "", color: "" };
+    const lengthScore = value.length >= 10 ? 2 : value.length >= 8 ? 1 : 0;
+    const hasNumber = /[0-9]/.test(value);
+    const hasUpper = /[A-Z]/.test(value);
+    const hasSpecial = /[^A-Za-z0-9]/.test(value);
+    const bonus = [hasNumber, hasUpper, hasSpecial].filter(Boolean).length;
+    const total = lengthScore + bonus;
+    if (total >= 4) return { label: "Strong", color: "#28a745" };
+    if (total >= 2) return { label: "Medium", color: "#ffc107" };
+    return { label: "Weak", color: "#dc3545" };
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
@@ -55,6 +68,17 @@ function AdminChangePasswordPage() {
               onChange={(e) => setNewPassword(e.target.value)}
               required
             />
+            {newPassword && (
+              <div
+                style={{
+                  marginTop: "6px",
+                  fontSize: "0.9rem",
+                  color: getPasswordStrength(newPassword).color,
+                }}
+              >
+                Password strength: {getPasswordStrength(newPassword).label}
+              </div>
+            )}
           </div>
           <div className="admin-form-group">
             <label>Confirm New Password:</label>

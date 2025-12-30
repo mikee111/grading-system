@@ -16,23 +16,23 @@ function StudentsPage() {
 
   const [editingIndex, setEditingIndex] = useState(null);
 
-  // Assign subject popup
+
   const [assignIndex, setAssignIndex] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
 
-  // Load students
+
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("studentsData")) || [];
     setStudents(saved);
   }, []);
 
-  // Load subjects
+
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("subjectsData")) || [];
     setSubjects(saved);
   }, []);
 
-  // Save students
+
   useEffect(() => {
     localStorage.setItem("studentsData", JSON.stringify(students));
   }, [students]);

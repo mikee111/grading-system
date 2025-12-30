@@ -4,8 +4,6 @@ import "../css/AdminForms.css";
 
 function AdminProfilePage() {
   const { currentUser, updateUserProfile } = useData();
-
-
   const [profileData, setProfileData] = useState({
     firstName: currentUser.firstName,
     lastName: currentUser.lastName,
@@ -37,6 +35,26 @@ function AdminProfilePage() {
   return (
     <div className="admin-form-container">
       <h2>Admin Profile</h2>
+
+      <div
+        style={{
+          marginBottom: "20px",
+          padding: "12px 16px",
+          borderRadius: "8px",
+          border: "1px solid #ddd",
+          backgroundColor: "#fff",
+        }}
+      >
+        <p><strong>Name:</strong> {currentUser.firstName} {currentUser.lastName}</p>
+        <p><strong>Role:</strong> {currentUser.role}</p>
+        <p><strong>Email:</strong> {currentUser.email}</p>
+        <p>
+          <strong>Last login:</strong>{" "}
+          {currentUser.lastLogin
+            ? new Date(currentUser.lastLogin).toLocaleString()
+            : "No login recorded yet"}
+        </p>
+      </div>
 
       <div className="admin-form">
         <h3>Edit Profile</h3>

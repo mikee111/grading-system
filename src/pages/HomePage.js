@@ -1,3 +1,5 @@
+
+
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { useFormVisibility } from '../context/FormVisibilityContext';
@@ -5,18 +7,23 @@ import MultiStepSignupPage from './MultiStepSignupPage';
 import LoginPage from './LoginPage';
 import '../css/HomePage.css';
 
+
 function HomePage() {
+
   const { showSignup, setShowSignup, showLogin, setShowLogin } = useFormVisibility();
+
 
   const handleShowSignup = () => {
     setShowSignup(true);
     setShowLogin(false);
   };
 
+
   const handleShowLogin = () => {
     setShowLogin(true);
     setShowSignup(false);
   };
+
 
   const handleCloseForms = () => {
     setShowSignup(false);
@@ -25,6 +32,7 @@ function HomePage() {
 
   return (
     <div className="homepage-container">
+
       <header className="homepage-header">
         <nav className="homepage-nav">
           <Link to="/" className="nav-link" onClick={handleCloseForms}>Home</Link>
@@ -35,14 +43,18 @@ function HomePage() {
         </nav>
       </header>
 
+
       {(showSignup || showLogin) ? (
+
         <div className="form-overlay">
-          {showSignup && <MultiStepSignupPage />}
-          {showLogin && <LoginPage />}
+          {showSignup && <MultiStepSignupPage />} 
+          {showLogin && <LoginPage />} 
           <button className="close-form-button" onClick={handleCloseForms}>X</button>
         </div>
       ) : (
+
         <>
+
           <section className="hero-section">
             <div className="hero-content">
               <h1>BACK TO School</h1>
@@ -56,6 +68,7 @@ function HomePage() {
               <img src="https://images.esquiremag.ph/esquiremagph/images/2020/11/24/dlsu-1-1606113347.jpg" alt="School Desk" />
             </div>
           </section>
+
 
           <section className="vision-mission-section">
             <div className="vision-mission-content">
