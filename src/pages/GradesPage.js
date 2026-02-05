@@ -1,40 +1,75 @@
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useData } from "../context/DataContext";
 import "./GradesPage.css";
 
 
 function GradesPage() {
-
-  const [students, setStudents] = useState([]);
+  const { students, subjects, enrollments, saveGradeRecord, currentUser, toEquivalent, users } = useData();
   const [selectedStudent, setSelectedStudent] = useState(null);
-
   const [selectedSubject, setSelectedSubject] = useState("");
   const [newSubject, setNewSubject] = useState("");
-
   const [midterm, setMidterm] = useState("");
   const [finals, setFinals] = useState("");
+  const [localGrades, setLocalGrades] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
 
-  const [grades, setGrades] = useState([]);
+  const isTeacher = currentUser && currentUser.role === "teacher";
+  const isAdmin = currentUser && currentUser.role === "admin";
 
+  // Logic to identify teacher's subjects (same as in TeacherDashboard)
+   const teacherSubjects = useMemo(() => {
+    if (!currentUser) return [];
+    if (isAdmin) return subjects; // Admins can see all subjects
 
+    const firstName = (currentUser.firstName || "").toLowerCase().trim();
+    const lastName = (currentUser.lastName || "").toLowerCase().trim();
+    const email = (currentUser.email || "").toLowerCase().trim();
+    const username = (currentUser.username || "").toLowerCase().trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    const normalize = (str) => (str || "").toString().toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+    const normalizedFullName = normalize(fullName);
+
+    return subjects.filter((s) => {
+      const assignedName = (s.teacherName || "").toString().trim();
+      if (!assignedName) return false;
+
+      const normalizedAssignedName = normalize(assignedName);
+      const lowerAssigned = assignedName.toLowerCase();
+      
+      // Exact and partial matching
+      return (
+        lowerAssigned === fullName.toLowerCase() ||
+        lowerAssigned === email ||
+        lowerAssigned === username ||
+        normalizedAssignedName === normalizedFullName ||
+        (fullName && lowerAssigned.includes(fullName.toLowerCase())) ||
+        (normalizedFullName && normalizedAssignedName.includes(normalizedFullName))
+      );
+    });
+  }, [subjects, currentUser, isAdmin]);
+
+  // Initialize localGrades with enrollment data
   useEffect(() => {
-    const studs = JSON.parse(localStorage.getItem("studentsData")) || [];
-    setStudents(studs);
-  }, []); 
-
-
-  useEffect(() => {
-    const g = JSON.parse(localStorage.getItem("gradesData")) || [];
-    setGrades(g);
-  }, []); 
-
-  /**
-   * Saves the current grades array to localStorage.
-   * @param {Array} g - The grades array to be saved.
-   */
-  const saveGrades = (g) =>
-    localStorage.setItem("gradesData", JSON.stringify(g));
+    const gradesArray = [];
+    Object.keys(enrollments || {}).forEach(studentId => {
+      const studentEnrollments = enrollments[studentId] || [];
+      studentEnrollments.forEach(subject => {
+        gradesArray.push({
+          studentId: studentId,
+          subject: subject.name,
+          midterm: subject.midtermScore || '',
+          midtermEq: subject.midtermEq || '',
+          finals: subject.finalScore || '',
+          finalsEq: subject.finalEq || '',
+          rating: subject.rating || '',
+          status: subject.status || ''
+        });
+      });
+    });
+    setLocalGrades(gradesArray);
+  }, [enrollments]);
 
   /**
    * Handles the selection of a .   * @param {Object} e - The event object from the select input.
@@ -44,6 +79,14 @@ function GradesPage() {
     const stud = students.find((s) => s.id === id) || null;
     setSelectedStudent(stud);
     setSelectedSubject(""); // Reset selected subject when student changes
+    
+    if (stud) {
+      setSelectedCourse(stud.course || "");
+      setSelectedYear(stud.year || "");
+    } else {
+      setSelectedCourse("");
+      setSelectedYear("");
+    }
   };
 
   /**
@@ -54,57 +97,18 @@ function GradesPage() {
     if (!selectedStudent) return alert("Select a student first.");
     if (!newSubject.trim()) return alert("Enter subject name.");
 
-    const updatedStudents = [...students];
-    const idx = updatedStudents.findIndex(
-      (s) => s.id === selectedStudent.id
-    );
+    // Find the subject in the subjects array
+    const subject = subjects.find(s => s.name === newSubject);
+    if (!subject) return alert("Subject not found in system.");
 
-    // Initialize subjects array if it doesn't exist
-    if (!updatedStudents[idx].subjects)
-      updatedStudents[idx].subjects = [];
+    // Check if already enrolled
+    if (enrollments[selectedStudent.id]?.some(e => e.name === newSubject)) {
+      return alert("Subject already assigned to student.");
+    }
 
-    // Prevent adding duplicate subjects
-    if (updatedStudents[idx].subjects.includes(newSubject))
-      return alert("Subject already exists.");
-
-    updatedStudents[idx].subjects.push(newSubject);
-
-    // Also create an initial grade entry for the new subject
-    const newGrades = [...grades];
-    newGrades.push({
-      studentId: selectedStudent.id, // Use studentId for consistency
-      subject: newSubject,
-      midterm: "",
-      midtermEq: "",
-      finals: "",
-      finalsEq: "",
-    });
-    setGrades(newGrades);
-    saveGrades(newGrades);
-
-    localStorage.setItem("studentsData", JSON.stringify(updatedStudents));
-    setStudents(updatedStudents);
-    setSelectedStudent(updatedStudents[idx]); // Update selected student to reflect new subjects
+    // Enroll the subject with empty grades
+    saveGradeRecord(selectedStudent.id, subject, "", "");
     setNewSubject(""); // Clear new subject input
-  };
-
-  /**
-   * Converts a raw numerical grade to its equivalent numerical value (e.g., 96 -> 1.0).
-   * @param {number} raw - The raw grade score.
-   * @returns {number} The equivalent numerical grade.
-   */
-  const toEquivalent = (raw) => {
-    raw = Number(raw);
-    if (raw >= 96) return 1.0;
-    if (raw >= 94) return 1.25;
-    if (raw >= 92) return 1.5;
-    if (raw >= 89) return 1.75;
-    if (raw >= 86) return 2.0;
-    if (raw >= 83) return 2.25;
-    if (raw >= 80) return 2.5;
-    if (raw >= 77) return 2.75;
-    if (raw >= 75) return 3.0;
-    return 5.0; // Failing grade
   };
 
   /**
@@ -116,31 +120,11 @@ function GradesPage() {
     if (!selectedSubject) return alert("Select subject.");
     if (midterm === "") return alert("Enter midterm.");
 
-    const eq = toEquivalent(midterm);
+    const subject = subjects.find(s => s.name === selectedSubject);
+    if (!subject) return alert("Subject not found.");
 
-    const newGrades = [...grades];
-    let found = newGrades.find(
-      (g) => g.studentId === selectedStudent.id && g.subject === selectedSubject
-    );
-
-    if (found) {
-      // Update existing grade entry
-      found.midterm = midterm;
-      found.midtermEq = eq;
-    } else {
-      // Create new grade entry if not found
-      newGrades.push({
-        studentId: selectedStudent.id,
-        subject: selectedSubject,
-        midterm: midterm,
-        midtermEq: eq,
-        finals: "", // Initialize finals as empty
-        finalsEq: "", // Initialize finals equivalent as empty
-      });
-    }
-
-    setGrades(newGrades);
-    saveGrades(newGrades);
+    toEquivalent(midterm); // Calculate equivalent but not used
+    saveGradeRecord(selectedStudent.id, subject, midterm, finals || "");
     setMidterm(""); // Clear midterm input
   };
 
@@ -153,31 +137,11 @@ function GradesPage() {
     if (!selectedSubject) return alert("Select subject.");
     if (finals === "") return alert("Enter finals.");
 
-    const eq = toEquivalent(finals);
+    const subject = subjects.find(s => s.name === selectedSubject);
+    if (!subject) return alert("Subject not found.");
 
-    const newGrades = [...grades];
-    let found = newGrades.find(
-      (g) => g.studentId === selectedStudent.id && g.subject === selectedSubject
-    );
-
-    if (found) {
-      // Update existing grade entry
-      found.finals = finals;
-      found.finalsEq = eq;
-    } else {
-      // Create new grade entry if not found
-      newGrades.push({
-        studentId: selectedStudent.id,
-        subject: selectedSubject,
-        midterm: "", // Initialize midterm as empty
-        midtermEq: "", // Initialize midterm equivalent as empty
-        finals: finals,
-        finalsEq: eq,
-      });
-    }
-
-    setGrades(newGrades);
-    saveGrades(newGrades);
+    toEquivalent(finals); // Calculate equivalent but not used
+    saveGradeRecord(selectedStudent.id, subject, midterm || "", finals);
     setFinals(""); // Clear finals input
   };
 
@@ -233,33 +197,72 @@ function GradesPage() {
           <option value="">1st</option>
           <option value="">2nd</option>
         </select>
+        {" "}
+        Course:{" "}
+        <select 
+          value={selectedCourse} 
+          onChange={(e) => setSelectedCourse(e.target.value)}
+        >
+          <option value="">Select Course</option>
+          {Array.from(new Set(students.map(s => s.course).filter(Boolean))).map((course, idx) => (
+            <option key={idx} value={course}>{course}</option>
+          ))}
+        </select>
+        {" "}
+        Year Level:{" "}
+        <select 
+          value={selectedYear} 
+          onChange={(e) => setSelectedYear(e.target.value)}
+        >
+          <option value="">Select Year</option>
+          <option value="1st Year">1st Year</option>
+          <option value="2nd Year">2nd Year</option>
+          <option value="3rd Year">3rd Year</option>
+          <option value="4th Year">4th Year</option>
+        </select>
       </div>
 
-      {selectedStudent && (
+      {selectedStudent && isTeacher && (
         <div className="conditional-student-content">
           {/* ADD SUBJECT */}
           <div className="grades-input-group">
-            <input
-              type="text"
-              placeholder="Add subject"
+            <label style={{ marginRight: "10px", fontWeight: "bold" }}>Add Subject to Student:</label>
+            <select
               value={newSubject}
               onChange={(e) => setNewSubject(e.target.value)}
-            />
-            <button onClick={handleAddSubject}>Add Subject</button>
+              style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
+            >
+              <option value="">-- Select Subject to Add --</option>
+              {teacherSubjects.map((s) => (
+                <option key={s.id} value={s.name}>
+                  {s.name} ({s.id})
+                </option>
+              ))}
+            </select>
+            <button 
+              onClick={handleAddSubject}
+              style={{ marginLeft: "10px", padding: "8px 16px", backgroundColor: "#28a745", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
+            >
+              Add Subject
+            </button>
           </div>
 
           {/* SUBJECT DROPDOWN */}
           <div className="grades-input-group">
+            <label style={{ marginRight: "10px", fontWeight: "bold" }}>Grade for Subject:</label>
             <select
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
+              style={{ padding: "8px", borderRadius: "4px", border: "1px solid #ccc" }}
             >
-              <option value="">Select Subject</option>
-              {(selectedStudent.subjects || []).map((subj, i) => (
-                <option key={i} value={subj}>
-                  {subj}
-                </option>
-              ))}
+              <option value="">-- Select Subject to Grade --</option>
+              {(enrollments[selectedStudent.id] || [])
+                .filter(enrolledSub => isAdmin || teacherSubjects.some(ts => ts.name === enrolledSub.name))
+                .map((subj, i) => (
+                  <option key={i} value={subj.name}>
+                    {subj.name}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -298,7 +301,7 @@ function GradesPage() {
         </thead>
 
         <tbody>
-          {grades
+          {localGrades
             .filter(
               (g) =>
                 selectedStudent &&

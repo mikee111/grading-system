@@ -4,139 +4,372 @@ const DataContext = createContext(null);
 const STORAGE_KEY = "gradingSystemData";
 
 export function DataProvider({ children }) {
-  const [students, setStudents] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [enrollments, setEnrollments] = useState({});
-  const [users, setUsers] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-
+  // Helper to load data from localStorage immediately
+  const loadInitialData = () => {
     const raw = localStorage.getItem(STORAGE_KEY);
-
     if (raw) {
-      const data = JSON.parse(raw);
-
-      setStudents(Array.isArray(data.students) ? data.students : []);
-      setSubjects(Array.isArray(data.subjects) ? data.subjects : []);
-      setEnrollments(data.enrollments && typeof data.enrollments === "object" ? data.enrollments : {});
-
-      const loadedUsers = Array.isArray(data.users) ? data.users : [];
-      const defaultAdmin = {
-        id: "admin1",
-        firstName: "Default",
-        lastName: "Admin",
-        email: "admin@example.com",
-        username: "admin",
-        password: "123",
-        role: "admin",
-        lastLogin: null,
-      };
-      const defaultTeacher = {
-        id: "teacher1",
-        firstName: "Default",
-        lastName: "Teacher",
-        email: "teacher@example.com",
-        username: "teacher",
-        password: "123",
-        role: "teacher",
-        lastLogin: null,
-      };
-
-      const withDefaults = [...loadedUsers];
-      if (!withDefaults.some((user) => user.email === defaultAdmin.email)) {
-        withDefaults.push(defaultAdmin);
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Failed to parse stored data", e);
+        return {};
       }
-      if (!withDefaults.some((user) => user.email === defaultTeacher.email)) {
-        withDefaults.push(defaultTeacher);
+    }
+    return {};
+  };
+
+  const initialData = loadInitialData();
+
+  const [students, setStudents] = useState(() => {
+    let list = Array.isArray(initialData.students) ? [...initialData.students] : [
+      { id: "s1", firstName: "John", lastName: "Doe", course: "BSIT", year: "BSIT 4", section: "Section 3" },
+      { id: "s2", firstName: "Jane", lastName: "Smith", course: "Biology", year: "2nd Year", section: "A" },
+      { id: "s3", firstName: "Alice", lastName: "Brown", course: "Engineering", year: "1st Year", section: "B" },
+      { id: "s-john-cruzin", firstName: "John Viray", lastName: "Cruzin", course: "BSIT", year: "BSIT 4", section: "Section 3" },
+    ];
+    
+    // Ensure John Cruzin is ALWAYS present
+    if (!list.some(s => s.id === "s-john-cruzin")) {
+      list.push({ id: "s-john-cruzin", firstName: "John Viray", lastName: "Cruzin", course: "BSIT", year: "BSIT 4", section: "Section 3", accountStatus: "Active" });
+    }
+    return list;
+  });
+
+  const [subjects, setSubjects] = useState(() => {
+    if (Array.isArray(initialData.subjects)) return initialData.subjects;
+    return [
+      { id: "sub-it107", name: "IT 107", gradeLevel: "BSIT 4", course: "BSIT", section: "Section 3", teacherName: "teacher" },
+      { id: "sub1", name: "Mathematics", gradeLevel: "3rd Year", course: "Computer Science", yearLevel: "3rd Year", teacherName: "polcruz" },
+      { id: "sub2", name: "Science", gradeLevel: "2nd Year", course: "Biology", yearLevel: "2nd Year", teacherName: "mariaclara" }
+    ];
+  });
+
+  const [courses, setCourses] = useState(() => {
+    if (Array.isArray(initialData.courses)) return initialData.courses;
+    return [
+      { id: "c1", name: "Computer Science", code: "CS" },
+      { id: "c2", name: "Biology", code: "BIO" },
+      { id: "c3", name: "Engineering", code: "ENG" },
+      { id: "c4", name: "Arts", code: "ARTS" }
+    ];
+  });
+
+  const [yearLevels, setYearLevels] = useState(() => {
+    if (Array.isArray(initialData.yearLevels)) return initialData.yearLevels;
+    return [
+      { id: "y1", name: "1st Year" },
+      { id: "y2", name: "2nd Year" },
+      { id: "y3", name: "3rd Year" },
+      { id: "y4", name: "4th Year" }
+    ];
+  });
+
+  const [sections, setSections] = useState(() => {
+    if (Array.isArray(initialData.sections)) return initialData.sections;
+    return [
+      { id: "sec1", name: "A", courseId: "c1", yearLevelId: "y1" },
+      { id: "sec2", name: "B", courseId: "c1", yearLevelId: "y1" },
+      { id: "sec3", name: "A", courseId: "c2", yearLevelId: "y2" }
+    ];
+  });
+
+  const [schoolYears, setSchoolYears] = useState(() => {
+    if (Array.isArray(initialData.schoolYears)) return initialData.schoolYears;
+    return [
+      { id: "sy1", name: "2023-2024", isActive: false },
+      { id: "sy2", name: "2024-2025", isActive: true }
+    ];
+  });
+
+  const [semesters, setSemesters] = useState(() => {
+    if (Array.isArray(initialData.semesters)) return initialData.semesters;
+    return [
+      { id: "sem1", name: "1st Semester", isActive: true },
+      { id: "sem2", name: "2nd Semester", isActive: false }
+    ];
+  });
+
+  const [enrollments, setEnrollments] = useState(() => {
+    let data = (initialData.enrollments && typeof initialData.enrollments === "object") ? { ...initialData.enrollments } : {
+      "s1": [
+        { id: "sub1", name: "Mathematics", gradeLevel: "Advanced", grade: 85, schoolYear: "2024-2025", semester: "1st" },
+        { id: "sub2", name: "Science", gradeLevel: "Intermediate", grade: 88, schoolYear: "2023-2024", semester: "2nd" }
+      ],
+      "s2": [
+        { id: "sub2", name: "Science", gradeLevel: "Intermediate", grade: 90, schoolYear: "2024-2025", semester: "1st" }
+      ],
+      "s3": [ // Historical data for charts
+        { id: "sub1", name: "Mathematics", gradeLevel: "Advanced", grade: 80, schoolYear: "2022-2023", semester: "1st" }
+      ],
+      "s4": [
+        { id: "sub1", name: "Mathematics", gradeLevel: "Advanced", grade: 82, schoolYear: "2022-2023", semester: "2nd" }
+      ],
+      "s5": [
+        { id: "sub2", name: "Science", gradeLevel: "Intermediate", grade: 75, schoolYear: "2023-2024", semester: "1st" }
+      ],
+      "s-john-cruzin": [
+        { id: "sub1", name: "Mathematics", gradeLevel: "BSIT 4", grade: "", schoolYear: "2024-2025", semester: "1st Semester" }
+      ]
+    };
+
+    // Ensure John Cruzin is enrolled in sub1
+    if (!data["s-john-cruzin"] || !data["s-john-cruzin"].some(e => e.id === "sub1")) {
+      const johnEnrollments = data["s-john-cruzin"] ? [...data["s-john-cruzin"]] : [];
+      if (!johnEnrollments.some(e => e.id === "sub1")) {
+        johnEnrollments.push({ 
+          id: "sub1", 
+          name: "Mathematics", 
+          gradeLevel: "BSIT 4", 
+          grade: "", 
+          schoolYear: "2024-2025", 
+          semester: "1st Semester" 
+        });
       }
-
-      setUsers(withDefaults);
-
-      setCurrentUser(data.currentUser || null);
-
-    } else {
-      // If no data in localStorage, initialize with default admin
-
-      const initialUsers = [
-        {
-          id: "admin1",
-          firstName: "Default",
-          lastName: "Admin",
-          email: "admin@example.com",
-          username: "admin",
-          password: "123",
-          role: "admin",
-          lastLogin: null,
-        },
-        {
-          id: "teacher1",
-          firstName: "Default",
-          lastName: "Teacher",
-          email: "teacher@example.com",
-          username: "teacher",
-          password: "123",
-          role: "teacher",
-          lastLogin: null,
-        },
-      ];
-      setUsers(initialUsers);
-      setCurrentUser(null);
-
+      data["s-john-cruzin"] = johnEnrollments;
     }
+    return data;
+  });
 
-    setIsLoading(false);
+  const [users, setUsers] = useState(() => {
+    const loadedUsers = Array.isArray(initialData.users) ? initialData.users : [];
+    
+    const defaultAdmin = {
+      id: "admin1",
+      firstName: "Default",
+      lastName: "Admin",
+      email: "admin@example.com",
+      username: "admin",
+      password: "123",
+      role: "admin",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
+    const defaultTeacher = {
+      id: "teacher1",
+      firstName: "Default",
+      lastName: "Teacher",
+      email: "teacher@example.com",
+      username: "teacher",
+      password: "123",
+      role: "teacher",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
+    const polCruz = {
+      id: "teacher-pol",
+      firstName: "Pol",
+      lastName: "Cruz",
+      email: "pol@example.com",
+      username: "polcruz",
+      password: "123",
+      role: "teacher",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
+    const mariaClara = {
+      id: "teacher-maria",
+      firstName: "Maria",
+      lastName: "Clara",
+      email: "maria@example.com",
+      username: "mariaclara",
+      password: "123",
+      role: "teacher",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
+    const defaultStudent = {
+      id: "s1",
+      firstName: "John",
+      lastName: "Doe",
+      email: "student@example.com",
+      username: "student",
+      password: "123",
+      role: "student",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
+    const johnCruzin = {
+      id: "s-john-cruzin",
+      firstName: "John Viray",
+      lastName: "Cruzin",
+      email: "john.cruzin@example.com",
+      username: "johncruzin",
+      password: "123",
+      role: "student",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
 
-    if (students.length === 0) {
-      const initialStudents = [
-        { id: "s1", firstName: "John", lastName: "Doe", course: "Computer Science", year: "3" },
-        { id: "s2", firstName: "Jane", lastName: "Smith", course: "Biology", year: "2" }
-      ];
-      setStudents(initialStudents);
+    const withDefaults = [...loadedUsers];
+    if (!withDefaults.some((user) => user.id === "admin1")) {
+      withDefaults.push(defaultAdmin);
     }
-
-    if (subjects.length === 0) {
-      const initialSubjects = [
-        { id: "sub1", name: "Mathematics", gradeLevel: "Advanced" },
-        { id: "sub2", name: "Science", gradeLevel: "Intermediate" }
-      ];
-      setSubjects(initialSubjects);
+    if (!withDefaults.some((user) => user.id === "teacher1")) {
+      withDefaults.push(defaultTeacher);
     }
-
-    if (Object.keys(enrollments).length === 0) {
-      const initialEnrollments = {
-        "s1": [{ id: "sub1", name: "Mathematics", gradeLevel: "Advanced", grade: 85 }],
-        "s2": [{ id: "sub2", name: "Science", gradeLevel: "Intermediate", grade: 90 }]
-      };
-      setEnrollments(initialEnrollments);
+    if (!withDefaults.some((user) => user.id === "teacher-pol")) {
+      withDefaults.push(polCruz);
     }
-  }, []); // Empty dependency array to prevent infinite re-render
+    if (!withDefaults.some((user) => user.id === "teacher-maria")) {
+      withDefaults.push(mariaClara);
+    }
+    if (!withDefaults.some((user) => user.id === "s1")) {
+      withDefaults.push(defaultStudent);
+    }
+    if (!withDefaults.some((user) => user.id === "s-john-cruzin")) {
+      withDefaults.push(johnCruzin);
+    }
+    return withDefaults;
+  });
+
+  const [roles, setRoles] = useState(() => {
+    if (Array.isArray(initialData.roles)) return initialData.roles;
+    return [
+      { 
+        id: "role-admin", 
+        name: "Admin", 
+        permissions: ["view_students", "encode_grades", "edit_submitted_grades", "manage_teachers", "academic_setup", "view_dashboard", "manage_roles"],
+        isFullAccess: true,
+        status: "Active"
+      },
+      { 
+        id: "role-teacher", 
+        name: "Teacher", 
+        permissions: ["view_students", "encode_grades"],
+        isFullAccess: false,
+        status: "Active"
+      },
+      { 
+        id: "role-student", 
+        name: "Student", 
+        permissions: ["view_profile"],
+        isFullAccess: false,
+        status: "Active"
+      }
+    ];
+  });
+
+  const [activities, setActivities] = useState(() => {
+    if (Array.isArray(initialData.activities)) return initialData.activities;
+    return [
+      { id: "act1", type: "grade_encoded", message: "Teacher Juan encoded grades for Mathematics - Grade 9", timestamp: new Date(Date.now() - 3600000).toISOString() },
+      { id: "act2", type: "subject_added", message: "Admin added new subject: Science 10", timestamp: new Date(Date.now() - 7200000).toISOString() },
+      { id: "act3", type: "student_enrolled", message: "Student Maria Cruz enrolled", timestamp: new Date(Date.now() - 10800000).toISOString() }
+    ];
+  });
+
+  const addActivity = useCallback((message, type = "info") => {
+    setActivities((prev) => [
+      {
+        id: "act-" + Date.now(),
+        type,
+        message,
+        timestamp: new Date().toISOString(),
+      },
+      ...prev.slice(0, 49), // Keep only last 50 activities
+    ]);
+  }, []);
+
+  const [teacherAssignments, setTeacherAssignments] = useState(() => {
+    let assignments = (initialData.teacherAssignments && typeof initialData.teacherAssignments === "object") ? { ...initialData.teacherAssignments } : {
+      "teacher1": ["sub-it107"],
+      "teacher-pol": ["sub1"],
+      "teacher-maria": ["sub2"]
+    };
+    
+    // Force sub1 for Pol Cruz
+    if (!assignments["teacher-pol"]) assignments["teacher-pol"] = [];
+    if (!assignments["teacher-pol"].includes("sub1")) {
+      assignments["teacher-pol"].push("sub1");
+    }
+    return assignments;
+  });
+
+  const [currentUser, setCurrentUser] = useState(() => initialData.currentUser || null);
+  const [isLoading, setIsLoading] = useState(false); // No longer loading as we read directly in state init
 
   useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        const data = JSON.parse(e.newValue);
+        if (Array.isArray(data.students)) setStudents(data.students);
+        if (Array.isArray(data.subjects)) setSubjects(data.subjects);
+        if (Array.isArray(data.courses)) setCourses(data.courses);
+        if (Array.isArray(data.yearLevels)) setYearLevels(data.yearLevels);
+        if (Array.isArray(data.sections)) setSections(data.sections);
+        if (Array.isArray(data.schoolYears)) setSchoolYears(data.schoolYears);
+        if (Array.isArray(data.semesters)) setSemesters(data.semesters);
+        if (data.enrollments) setEnrollments(data.enrollments);
+        if (data.teacherAssignments) setTeacherAssignments(data.teacherAssignments);
+        if (Array.isArray(data.users)) setUsers(data.users);
+        if (Array.isArray(data.roles)) setRoles(data.roles);
+      }
+    };
 
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // No longer need the initialization useEffect as it's done in useState initializers
+
+  useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ students, subjects, enrollments, users, currentUser })
+      JSON.stringify({ 
+        students, subjects, enrollments, users, currentUser, 
+        teacherAssignments, activities, courses, yearLevels, 
+        sections, schoolYears, semesters, roles 
+      })
     );
+  }, [students, subjects, enrollments, users, currentUser, teacherAssignments, activities, courses, yearLevels, sections, schoolYears, semesters, roles]);
 
-  }, [students, subjects, enrollments, users, currentUser]);
+  const assignTeacherToSubject = useCallback((teacherId, subjectId) => {
+    setTeacherAssignments((prev) => {
+      const current = prev[teacherId] ? [...prev[teacherId]] : [];
+      if (!current.includes(subjectId)) {
+        current.push(subjectId);
+      }
+      return { ...prev, [teacherId]: current };
+    });
+  }, []);
+
+  const removeTeacherFromSubject = useCallback((teacherId, subjectId) => {
+    setTeacherAssignments((prev) => {
+      const current = prev[teacherId] ? prev[teacherId].filter(id => id !== subjectId) : [];
+      return { ...prev, [teacherId]: current };
+    });
+  }, []);
 
   const addStudent = useCallback((student) => {
-    setStudents((prev) => [...prev, student]);
+    const studentWithMeta = {
+      ...student,
+      id: student.id || `STU-${Date.now()}`,
+      role: "student",
+      dateCreated: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      accountStatus: student.accountStatus || "Active",
+      createdBy: currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "System"
+    };
+    setStudents((prev) => [...prev, studentWithMeta]);
+    addActivity(`Student ${student.firstName} ${student.lastName} enrolled`, "student_enrolled");
+  }, [addActivity, currentUser]);
+
+  const updateStudent = useCallback((student) => {
+    const updatedStudent = {
+      ...student,
+      lastUpdated: new Date().toISOString()
+    };
+    setStudents((prev) => prev.map((s) => (s.id === student.id ? updatedStudent : s)));
   }, []);
 
-  const updateStudent = useCallback((index, student) => {
-    setStudents((prev) => prev.map((s, i) => (i === index ? student : s)));
-  }, []);
-
-  const deleteStudent = useCallback((index) => {
-    setStudents((prev) => prev.filter((_, i) => i !== index));
+  const deleteStudent = useCallback((id) => {
+    setStudents((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
   const addSubject = useCallback((subject) => {
     setSubjects((prev) => [...prev, subject]);
-  }, []);
+    addActivity(`Admin added new subject: ${subject.name}`, "subject_added");
+  }, [addActivity]);
 
   const updateSubject = useCallback((index, subject) => {
     setSubjects((prev) => prev.map((s, i) => (i === index ? subject : s)));
@@ -146,15 +379,148 @@ export function DataProvider({ children }) {
     setSubjects((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const claimSubject = useCallback((subjectId, teacherName) => {
+    setSubjects((prev) => {
+      return prev.map((s) => {
+        if (s.id.toString() === subjectId.toString()) {
+          return { ...s, teacherName: teacherName };
+        }
+        return s;
+      });
+    });
+  }, []);
+
+  // Academic Setup CRUD functions
+  const addCourse = useCallback((course) => {
+    setCourses((prev) => [...prev, { ...course, id: `c-${Date.now()}` }]);
+    addActivity(`Admin added new course: ${course.name}`, "academic_setup");
+  }, [addActivity]);
+
+  const updateCourse = useCallback((id, updatedCourse) => {
+    setCourses((prev) => prev.map((c) => (c.id === id ? updatedCourse : c)));
+  }, []);
+
+  const deleteCourse = useCallback((id) => {
+    setCourses((prev) => prev.filter((c) => c.id !== id));
+  }, []);
+
+  const addYearLevel = useCallback((year) => {
+    setYearLevels((prev) => [...prev, { ...year, id: `y-${Date.now()}` }]);
+  }, []);
+
+  const updateYearLevel = useCallback((id, updatedYear) => {
+    setYearLevels((prev) => prev.map((y) => (y.id === id ? updatedYear : y)));
+  }, []);
+
+  const deleteYearLevel = useCallback((id) => {
+    setYearLevels((prev) => prev.filter((y) => y.id !== id));
+  }, []);
+
+  const addSection = useCallback((section) => {
+    setSections((prev) => [...prev, { ...section, id: `sec-${Date.now()}` }]);
+  }, []);
+
+  const updateSection = useCallback((id, updatedSection) => {
+    setSections((prev) => prev.map((s) => (s.id === id ? updatedSection : s)));
+  }, []);
+
+  const deleteSection = useCallback((id) => {
+    setSections((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
+  const addSchoolYear = useCallback((sy) => {
+    setSchoolYears((prev) => {
+      const newList = [...prev, { ...sy, id: `sy-${Date.now()}` }];
+      if (sy.isActive) {
+        return newList.map(item => item.id === `sy-${Date.now()}` ? item : { ...item, isActive: false });
+      }
+      return newList;
+    });
+  }, []);
+
+  const updateSchoolYear = useCallback((id, updatedSy) => {
+    setSchoolYears((prev) => {
+      const newList = prev.map((s) => (s.id === id ? updatedSy : s));
+      if (updatedSy.isActive) {
+        return newList.map(item => item.id === id ? item : { ...item, isActive: false });
+      }
+      return newList;
+    });
+  }, []);
+
+  const deleteSchoolYear = useCallback((id) => {
+    setSchoolYears((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
+  const addSemester = useCallback((sem) => {
+    setSemesters((prev) => {
+      const newList = [...prev, { ...sem, id: `sem-${Date.now()}` }];
+      if (sem.isActive) {
+        return newList.map(item => item.id === `sem-${Date.now()}` ? item : { ...item, isActive: false });
+      }
+      return newList;
+    });
+  }, []);
+
+  const updateSemester = useCallback((id, updatedSem) => {
+    setSemesters((prev) => {
+      const newList = prev.map((s) => (s.id === id ? updatedSem : s));
+      if (updatedSem.isActive) {
+        return newList.map(item => item.id === id ? item : { ...item, isActive: false });
+      }
+      return newList;
+    });
+  }, []);
+
+  const deleteSemester = useCallback((id) => {
+    setSemesters((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
   const enrollSubject = useCallback((studentId, subject) => {
     setEnrollments((prev) => {
       const list = prev[studentId] ? [...prev[studentId]] : [];
       if (!list.some((s) => s.id === subject.id)) {
-        list.push({ id: subject.id, name: subject.name, gradeLevel: subject.gradeLevel || "", grade: "" });
+        list.push({ 
+          id: subject.id, 
+          name: subject.name, 
+          gradeLevel: subject.gradeLevel || "", 
+          grade: "",
+          schoolYear: subject.schoolYear || "",
+          semester: subject.semester || ""
+        });
       }
       return { ...prev, [studentId]: list };
     });
   }, []);
+
+  const enrollStudentsInSubject = useCallback((subjectId, studentIds) => {
+    const subject = subjects.find(s => s.id === subjectId);
+    if (!subject) return;
+
+    setEnrollments((prev) => {
+      const newEnrollments = { ...prev };
+      studentIds.forEach(studentId => {
+        const list = newEnrollments[studentId] ? [...newEnrollments[studentId]] : [];
+        if (!list.some(s => s.id === subjectId)) {
+          list.push({
+            id: subject.id,
+            name: subject.name,
+            gradeLevel: subject.gradeLevel || "",
+            grade: "",
+            schoolYear: subject.schoolYear || "",
+            semester: subject.semester || ""
+          });
+        }
+        newEnrollments[studentId] = list;
+      });
+      return newEnrollments;
+    });
+
+    const teacherId = Object.keys(teacherAssignments).find(tId => teacherAssignments[tId].includes(subjectId));
+    const teacher = users.find(u => u.id === teacherId);
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "a teacher";
+    addActivity(`Admin enrolled ${studentIds.length} students to ${subject.name} (Assigned to ${teacherName})`, "student_enrolled");
+  }, [subjects, teacherAssignments, users, addActivity]);
 
   const removeEnrollment = useCallback((studentId, subjectId) => {
     setEnrollments((prev) => {
@@ -181,16 +547,24 @@ export function DataProvider({ children }) {
 
   const toEquivalent = useCallback((score) => {
     if (score === undefined || score === null || score === "") return "";
-    const n = Number(score);
-    if (Number.isNaN(n)) return "";
-    const eq = n / 10 - 0.4;
-    return Math.round(eq * 10) / 10;
+    const raw = Number(score);
+    if (Number.isNaN(raw)) return "";
+    if (raw >= 96) return 1.0;
+    if (raw >= 94) return 1.25;
+    if (raw >= 92) return 1.5;
+    if (raw >= 89) return 1.75;
+    if (raw >= 86) return 2.0;
+    if (raw >= 83) return 2.25;
+    if (raw >= 80) return 2.5;
+    if (raw >= 77) return 2.75;
+    if (raw >= 75) return 3.0;
+    return 5.0;
   }, []);
 
-  const saveGradeRecord = useCallback((studentId, subject, midtermScore, finalScore) => {
+  const saveGradeRecord = useCallback((studentId, subject, midtermScore, finalScore, extraFields = {}) => {
     setEnrollments((prev) => {
       const list = prev[studentId] ? [...prev[studentId]] : [];
-      const idx = list.findIndex((s) => s.id === subject.id);
+      const idx = list.findIndex((s) => String(s.id) === String(subject.id));
       const record = {
         id: subject.id,
         name: subject.name,
@@ -199,6 +573,7 @@ export function DataProvider({ children }) {
         midtermEq: toEquivalent(midtermScore),
         finalScore: finalScore,
         finalEq: toEquivalent(finalScore),
+        ...extraFields
       };
       if (idx !== -1) {
         list[idx] = { ...list[idx], ...record };
@@ -207,36 +582,195 @@ export function DataProvider({ children }) {
       }
       return { ...prev, [studentId]: list };
     });
-  }, [toEquivalent]);
 
-  const signUp = useCallback((firstName, lastName, email, password, role = "admin") => {
-    const exists = users.some((u) => u.email === email);
-    if (exists) return false;
+    // Log activity
+    const teacherName = currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : "A teacher";
+    addActivity(`${teacherName} encoded grades for ${subject.name} - ${subject.gradeLevel || "N/A"}`, "grade_encoded");
+  }, [toEquivalent, addActivity, currentUser]);
+
+  const signUp = useCallback((firstName, lastName, email, password, role = "admin", username = null) => {
+    const emailTrimmed = (email || "").toString().trim().toLowerCase();
+    const usernameTrimmed = (username || "").toString().trim().toLowerCase();
+    const passTrimmed = (password || "").toString().trim();
+    const roleTrimmed = (role || "admin").toString().toLowerCase().trim();
+    
+    console.log("Signup attempt:", { firstName, lastName, email: emailTrimmed, role: roleTrimmed, username: usernameTrimmed });
+
+    const exists = users.some((u) => {
+      const storedEmail = (u.email || "").toString().toLowerCase().trim();
+      const storedUsername = (u.username || "").toString().toLowerCase().trim();
+      return storedEmail === emailTrimmed || (usernameTrimmed && storedUsername === usernameTrimmed);
+    });
+
+    if (exists) {
+      console.log("Signup failed: User already exists.");
+      return false;
+    }
+
     const id = `user-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const user = { id, firstName, lastName, email, password, role, username: email, lastLogin: null };
+    const user = { 
+      id, 
+      firstName: (firstName || "").toString().trim(), 
+      lastName: (lastName || "").toString().trim(), 
+      email: emailTrimmed, 
+      password: passTrimmed, 
+      role: roleTrimmed, 
+      username: usernameTrimmed || emailTrimmed, 
+      lastLogin: null,
+      accountStatus: "Active"
+    };
+
     setUsers((prev) => [...prev, user]);
+
+    // Explicitly sync to localStorage
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      const data = raw ? JSON.parse(raw) : {};
+      
+      // Merge new user into existing users array without losing other data
+      const existingUsers = Array.isArray(data.users) ? data.users : [];
+      if (!existingUsers.some(u => u.id === user.id)) {
+        existingUsers.push(user);
+      }
+      
+      const dataToSave = {
+        ...data,
+        users: existingUsers
+      };
+      
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+      console.log("Signup success! User saved to state and localStorage:", user);
+    } catch (e) {
+      console.error("Manual sync during signup failed:", e);
+    }
+
     return true;
   }, [users]);
 
+  const deleteUser = useCallback((userId) => {
+    if (userId === "admin1") {
+      alert("Cannot delete the default admin user.");
+      return;
+    }
+
+    setUsers((prev) => {
+      const user = prev.find((u) => u.id === userId);
+      if (!user) return prev;
+      
+      const adminsCount = prev.filter((u) => u.role === "admin").length;
+      if (user.role === "admin" && adminsCount <= 1) {
+        alert("Cannot delete the last admin user.");
+        return prev;
+      }
+      return prev.filter((u) => u.id !== userId);
+    });
+  }, []);
+
+  const updateUser = useCallback((userId, updates) => {
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, ...updates } : u)));
+  }, []);
+
+  const resetPasswordByAdmin = useCallback((userId, newPassword) => {
+    setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, password: newPassword } : u)));
+    
+    setCurrentUser((prev) => {
+      if (!prev || prev.id !== userId) return prev;
+      return { ...prev, password: newPassword };
+    });
+  }, []);
+
   const login = useCallback((identifier, password) => {
+    const iden = (identifier || "").toString().trim().toLowerCase();
+    const pass = (password || "").toString().trim();
+    
+    console.log("Login attempt for:", iden);
 
-    const idx = users.findIndex((u) => (u.username === identifier || u.email === identifier) && u.password === password);
-    if (idx === -1) {
+    // 1. Force a fresh read from localStorage to ensure we have the absolute latest users
+    const raw = localStorage.getItem(STORAGE_KEY);
+    let latestUsers = users;
+    let latestStudents = students;
+    let latestSubjects = subjects;
+    let latestEnrollments = enrollments;
+    let latestAssignments = teacherAssignments;
 
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.users)) {
+          latestUsers = data.users;
+          // Sync state if different
+          if (JSON.stringify(latestUsers) !== JSON.stringify(users)) {
+            setUsers(latestUsers);
+          }
+        }
+        if (Array.isArray(data.students)) latestStudents = data.students;
+        if (Array.isArray(data.subjects)) latestSubjects = data.subjects;
+        if (data.enrollments) latestEnrollments = data.enrollments;
+        if (data.teacherAssignments) latestAssignments = data.teacherAssignments;
+      } catch (e) {
+        console.error("Error during login data sync:", e);
+      }
+    }
+
+    // 2. Helper to find user
+    const findUser = (list) => {
+      return list.find((u) => {
+        const storedEmail = (u.email || "").toString().toLowerCase().trim();
+        const storedUsername = (u.username || "").toString().toLowerCase().trim();
+        const storedPass = (u.password || "").toString().trim();
+        return (storedUsername === iden || storedEmail === iden) && storedPass === pass;
+      });
+    };
+
+    const foundUser = findUser(latestUsers) || findUser(latestStudents);
+
+    if (!foundUser) {
+      console.log("Login failed. Registered users found in storage:", latestUsers.length);
+      console.log("Registered students found in storage:", latestStudents.length);
       return false;
     }
+
+    if (foundUser.accountStatus === "Inactive") {
+      console.log("Login failed: Account is inactive.");
+      return { success: false, message: "Your account is deactivated. Please contact the administrator." };
+    }
+
+    console.log("Login successful for:", foundUser.username);
     const now = new Date().toISOString();
-    const baseUser = users[idx];
-    const updatedUser = { ...baseUser, lastLogin: now };
-    setUsers((prev) => {
-      const copy = [...prev];
-      copy[idx] = updatedUser;
-      return copy;
-    });
+    const updatedUser = { ...foundUser, lastLogin: now };
+    
+    // Update state based on role
+    if (foundUser.role === "student") {
+      setStudents((prev) => prev.map(s => s.id === foundUser.id ? updatedUser : s));
+    } else {
+      setUsers((prev) => {
+        const idx = prev.findIndex(u => u.id === foundUser.id);
+        if (idx === -1) return [...prev, updatedUser];
+        const copy = [...prev];
+        copy[idx] = updatedUser;
+        return copy;
+      });
+    }
 
     setCurrentUser(updatedUser);
+    
+    // 3. Absolute sync back to localStorage
+    try {
+      const dataToSave = {
+        students: latestStudents.map(s => s.id === updatedUser.id ? updatedUser : s),
+        subjects: latestSubjects,
+        enrollments: latestEnrollments,
+        users: latestUsers.map(u => u.id === updatedUser.id ? updatedUser : u),
+        currentUser: updatedUser,
+        teacherAssignments: latestAssignments
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    } catch (e) {
+      console.error("Final login sync failed:", e);
+    }
+
     return updatedUser;
-  }, [users]);
+  }, [users, students, subjects, enrollments, teacherAssignments]);
 
   const logout = useCallback(() => {
     setCurrentUser(null);
@@ -251,7 +785,7 @@ export function DataProvider({ children }) {
               firstName: profileData.firstName,
               lastName: profileData.lastName,
               email: profileData.email,
-              username: profileData.email,
+              username: u.username || profileData.email,
             }
           : u
       )
@@ -264,7 +798,7 @@ export function DataProvider({ children }) {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         email: profileData.email,
-        username: profileData.email,
+        username: prev.username || profileData.email,
       };
     });
   }, []);
@@ -317,12 +851,66 @@ export function DataProvider({ children }) {
     });
   }, []);
 
+  const refreshData = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      
+      // Force state updates by using functional updates and ensuring new references
+      if (Array.isArray(data.students)) setStudents([...data.students]);
+      if (Array.isArray(data.subjects)) setSubjects([...data.subjects]);
+      if (data.enrollments) setEnrollments({...data.enrollments});
+      if (data.teacherAssignments) setTeacherAssignments({...data.teacherAssignments});
+      if (Array.isArray(data.users)) setUsers([...data.users]);
+      if (Array.isArray(data.roles)) setRoles([...data.roles]);
+      if (data.currentUser) setCurrentUser({...data.currentUser});
+      
+      console.log("Data successfully refreshed from localStorage");
+      return true;
+    } catch (e) {
+      console.error("Refresh failed:", e);
+      return false;
+    }
+  }, []);
+
+  const addRole = useCallback((role) => {
+    setRoles((prev) => [...prev, { ...role, id: `role-${Date.now()}` }]);
+    addActivity(`Admin created new role: ${role.name}`, "role_management");
+  }, [addActivity]);
+
+  const updateRole = useCallback((id, updatedRole) => {
+    setRoles((prev) => prev.map((r) => (r.id === id ? updatedRole : r)));
+    addActivity(`Admin updated role: ${updatedRole.name}`, "role_management");
+  }, [addActivity]);
+
+  const deleteRole = useCallback((id) => {
+    setRoles((prev) => prev.filter((r) => r.id !== id));
+    addActivity(`Admin deleted role with ID: ${id}`, "role_management");
+  }, [addActivity]);
+
+  const toggleRoleStatus = useCallback((id) => {
+    setRoles((prev) => prev.map((r) => {
+      if (r.id === id) {
+        return { ...r, status: r.status === "Active" ? "Inactive" : "Active" };
+      }
+      return r;
+    }));
+  }, []);
+
   const value = useMemo(
     () => ({
       students,
       subjects,
+      courses,
+      yearLevels,
+      sections,
+      schoolYears,
+      semesters,
       enrollments,
       users,
+      roles,
+      teacherAssignments,
       currentUser,
       addStudent,
       updateStudent,
@@ -330,43 +918,60 @@ export function DataProvider({ children }) {
       addSubject,
       updateSubject,
       deleteSubject,
+      addCourse,
+      updateCourse,
+      deleteCourse,
+      addYearLevel,
+      updateYearLevel,
+      deleteYearLevel,
+      addSection,
+      updateSection,
+      deleteSection,
+      addSchoolYear,
+      updateSchoolYear,
+      deleteSchoolYear,
+      addSemester,
+      updateSemester,
+      deleteSemester,
+      assignTeacherToSubject,
+      removeTeacherFromSubject,
       enrollSubject,
+      enrollStudentsInSubject,
       removeEnrollment,
       setGrade,
       saveGradeRecord,
       availableSubjectsFor,
       signUp,
+      deleteUser,
+      updateUser,
+      updateUserRole,
+      resetPasswordByAdmin,
+      claimSubject,
       login,
       logout,
       updateUserProfile,
       changePassword,
       updateUserRole,
       isLoading,
+      refreshData,
+      activities,
+      addActivity,
+      addRole,
+      updateRole,
+      deleteRole,
+      toggleRoleStatus,
     }),
     [
-      students,
-      subjects,
-      enrollments,
-      users,
-      currentUser,
-      addStudent,
-      updateStudent,
-      deleteStudent,
-      addSubject,
-      updateSubject,
-      deleteSubject,
-      enrollSubject,
-      removeEnrollment,
-      setGrade,
-      saveGradeRecord,
-      availableSubjectsFor,
-      signUp,
-      login,
-      logout,
-      updateUserProfile,
-      changePassword,
-      updateUserRole,
-      isLoading,
+      students, subjects, courses, yearLevels, sections, schoolYears, semesters,
+      enrollments, users, roles, teacherAssignments, currentUser, addStudent, updateStudent, 
+      deleteStudent, addSubject, updateSubject, deleteSubject, addCourse, updateCourse, 
+      deleteCourse, addYearLevel, updateYearLevel, deleteYearLevel, addSection, 
+      updateSection, deleteSection, addSchoolYear, updateSchoolYear, deleteSchoolYear, 
+      addSemester, updateSemester, deleteSemester, assignTeacherToSubject, 
+      removeTeacherFromSubject, enrollSubject, enrollStudentsInSubject, removeEnrollment, setGrade, 
+      saveGradeRecord, availableSubjectsFor, signUp, deleteUser, updateUser, updateUserRole, resetPasswordByAdmin, claimSubject, 
+      login, logout, updateUserProfile, changePassword, updateUserRole, 
+      isLoading, refreshData, activities, addActivity, addRole, updateRole, deleteRole, toggleRoleStatus
     ]
   );
 

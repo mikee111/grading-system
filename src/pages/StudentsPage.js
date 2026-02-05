@@ -1,217 +1,349 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+// Students Page - Create and manage student accounts
+import { useLocation } from "react-router-dom";
+import { useData } from "../context/DataContext";
+import "../css/AdminForms.css";
 
 function StudentsPage() {
-  const [students, setStudents] = useState([]);
-  const [subjects, setSubjects] = useState([]);
+  const { 
+    students, subjects, addStudent, updateStudent, deleteStudent,
+    courses, yearLevels, sections, schoolYears, semesters
+  } = useData();
+  const location = useLocation();
+  const [localStudents, setLocalStudents] = useState(students);
+  const [localSubjects, setLocalSubjects] = useState(subjects);
+
+  const activeSY = useMemo(() => schoolYears.find(sy => sy.isActive)?.name || "", [schoolYears]);
+  const activeSem = useMemo(() => semesters.find(s => s.isActive)?.name || "", [semesters]);
 
   const [form, setForm] = useState({
     id: "",
     firstName: "",
     lastName: "",
+    middleName: "",
+    gender: "",
+    dob: "",
+    age: "",
+    address: "",
     course: "",
     year: "",
+    section: "",
+    schoolYear: activeSY,
+    semester: activeSem,
+    studentStatus: "Regular",
+    email: "",
+    contactNumber: "",
+    guardianName: "",
+    relationship: "",
+    guardianContact: "",
+    username: "",
+    password: "",
+    accountStatus: "Active",
     subjects: []
   });
-  const [newAssigned, setNewAssigned] = useState("");
+
+  // Update form defaults when active SY/Sem change
+  useEffect(() => {
+    if (!form.id) { // Only for new student forms
+      setForm(prev => ({
+        ...prev,
+        schoolYear: activeSY,
+        semester: activeSem
+      }));
+    }
+  }, [activeSY, activeSem, form.id]);
 
   const [editingIndex, setEditingIndex] = useState(null);
 
+  // Check for edit student from location state
+  useEffect(() => {
+    if (location.state && location.state.editStudent) {
+      const student = location.state.editStudent;
+      setForm({
+        ...student,
+        subjects: student.subjects || []
+      });
+      // Find the index of the student being edited
+      const index = students.findIndex(s => s.id === student.id);
+      setEditingIndex(index !== -1 ? index : null);
+    }
+  }, [location.state, students]);
 
-  const [assignIndex, setAssignIndex] = useState(null);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-
+  // Age auto-calculation
+  useEffect(() => {
+    if (form.dob) {
+      const birthDate = new Date(form.dob);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      setForm(prev => ({ ...prev, age: age >= 0 ? age : "" }));
+    }
+  }, [form.dob]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("studentsData")) || [];
-    setStudents(saved);
-  }, []);
-
-
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("subjectsData")) || [];
-    setSubjects(saved);
-  }, []);
-
-
-  useEffect(() => {
-    localStorage.setItem("studentsData", JSON.stringify(students));
+    setLocalStudents(students);
   }, [students]);
 
+  useEffect(() => {
+    setLocalSubjects(subjects);
+  }, [subjects]);
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
   };
 
   const handleAddOrUpdate = () => {
-    if (!form.id || !form.firstName || !form.lastName)
-      return alert("Please complete all fields.");
-
-    let updated = [...students];
+    if (!form.firstName || !form.lastName || !form.email || !form.username || !form.password)
+      return alert("Please complete all required fields (Name, Email, Username, Password).");
 
     if (editingIndex !== null) {
-      updated[editingIndex] = {
-        ...form,
-        subjects: form.subjects || []
-      };
-      setEditingIndex(null);
-    } else {
-      updated.push({
+      updateStudent({
         ...form,
         subjects: form.subjects || []
       });
-    }
-
-    setStudents(updated);
-
-    setForm({
-      id: "",
-      firstName: "",
-      lastName: "",
-      course: "",
-      year: "",
-      subjects: []
-    });
-  };
-
-  const handleEdit = (index) => {
-    setForm({
-      ...students[index],
-      subjects: students[index].subjects || []
-    });
-    setEditingIndex(index);
-  };
-
-  const handleDelete = (index) => {
-    setStudents(students.filter((_, i) => i !== index));
-  };
-
-  // -------------------------------
-  // OPEN ASSIGN SUBJECTS MODAL
-  // -------------------------------
-  const openAssignModal = (index) => {
-    setAssignIndex(index);
-    setShowAssignModal(true);
-  };
-
-  // -------------------------------
-  // ASSIGN OR REMOVE SUBJECT
-  // -------------------------------
-  const toggleSubject = (subjectName) => {
-    const updated = [...students];
-    const student = updated[assignIndex];
-
-    if (!student.subjects) student.subjects = [];
-
-    if (student.subjects.includes(subjectName)) {
-      student.subjects = student.subjects.filter((s) => s !== subjectName);
+      alert("Student account updated successfully!");
     } else {
-      student.subjects.push(subjectName);
+      addStudent({
+        ...form,
+        subjects: form.subjects || []
+      });
+      alert("Student account created successfully!");
     }
 
-    setStudents(updated);
+    setForm({
+      id: "", firstName: "", lastName: "", middleName: "", gender: "", dob: "", age: "", address: "",
+      course: "", year: "", section: "", schoolYear: "2025-2026", semester: "1st Semester",
+      studentStatus: "Regular", email: "", contactNumber: "", guardianName: "", relationship: "",
+      guardianContact: "", username: "", password: "", accountStatus: "Active", subjects: []
+    });
+    setEditingIndex(null);
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "1100px", margin: "0 auto" }}>
-      <h2>Students Page</h2>
+    <div className="admin-page-container">
+      <div className="admin-form-container admin-form-wide">
+        <h2 style={{ marginBottom: '24px', borderBottom: '2px solid #007bff', paddingBottom: '10px' }}>
+          {editingIndex !== null ? "Edit Student Account" : "Create Student Account"}
+        </h2>
 
-      {/* FORM */}
-      <div style={{ marginBottom: "20px" }}>
-        <input name="id" placeholder="Student ID" value={form.id} onChange={handleChange} />
-        <input name="firstName" placeholder="First Name" value={form.firstName} onChange={handleChange} />
-        <input name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleChange} />
-        <input name="course" placeholder="Course" value={form.course} onChange={handleChange} />
-        <input name="year" placeholder="Year" value={form.year} onChange={handleChange} />
-
-        <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
-          <select value={newAssigned} onChange={(e) => setNewAssigned(e.target.value)}>
-            <option value="">Select subject to assign</option>
-            {subjects.map((s, i) => (
-              <option key={i} value={s.name}>{s.name}</option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => {
-              if (!newAssigned) return;
-              if (form.subjects?.includes(newAssigned)) return;
-              setForm({ ...form, subjects: [...(form.subjects || []), newAssigned] });
-              setNewAssigned("");
-            }}
-          >Assign</button>
-        </div>
-
-        <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {(form.subjects || []).map((name, idx) => (
-            <span key={idx} style={{ background: "#eef", border: "1px solid #ccd", borderRadius: 14, padding: "4px 10px", display: "inline-flex", alignItems: "center", gap: 6 }}>
-              {name}
-              <button type="button" onClick={() => setForm({ ...form, subjects: (form.subjects || []).filter((n) => n !== name) })} style={{ border: 0, background: "transparent", cursor: "pointer" }}>×</button>
-            </span>
-          ))}
-        </div>
-
-        <button onClick={handleAddOrUpdate}>
-          {editingIndex !== null ? "Update Student" : "Add Student"}
-        </button>
-      </div>
-
-      {/* TABLE */}
-      <table border="1" cellPadding="10" style={{ width: "100%" }}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Course</th>
-            <th>Year</th>
-            <th>Assigned Subjects</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {students.map((stud, index) => (
-            <tr key={index}>
-              <td>{stud.id}</td>
-              <td>{stud.firstName} {stud.lastName}</td>
-              <td>{stud.course}</td>
-              <td>{stud.year}</td>
-              <td>{stud.subjects?.join(", ") || "None"}</td>
-
-              <td>
-                <button onClick={() => handleEdit(index)}>Edit</button>
-                <button onClick={() => handleDelete(index)}>Delete</button>
-                <button onClick={() => openAssignModal(index)}>Assign Subject</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* ASSIGN SUBJECT MODAL */}
-      {showAssignModal && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
-          background: "rgba(0,0,0,0.5)", display: "flex",
-          justifyContent: "center", alignItems: "center"
-        }}>
-          <div style={{ background: "white", padding: "20px", width: "400px" }}>
-            <h3>Assign Subjects</h3>
-
-            {subjects.map((s, i) => (
-              <div key={i}>
-                <input
-                  type="checkbox"
-                  checked={students[assignIndex]?.subjects?.includes(s.name)}
-                  onChange={() => toggleSubject(s.name)}
-                />
-                {s.name}
+        <div className="admin-form admin-form-wide">
+          {/* Student Basic Information */}
+          <div className="admin-form-section">
+            <h3 className="section-title">👤 Student Basic Information</h3>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Student ID (Auto-generated if empty)</label>
+                <input name="id" placeholder="ID will be auto-generated" value={form.id} onChange={handleChange} disabled={editingIndex !== null} />
               </div>
-            ))}
+              <div className="admin-form-group">
+                <label>First Name *</label>
+                <input name="firstName" placeholder="First Name" value={form.firstName} onChange={handleChange} required />
+              </div>
+              <div className="admin-form-group">
+                <label>Middle Name</label>
+                <input name="middleName" placeholder="Middle Name" value={form.middleName} onChange={handleChange} />
+              </div>
+              <div className="admin-form-group">
+                <label>Last Name *</label>
+                <input name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleChange} required />
+              </div>
+            </div>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Gender</label>
+                <select name="gender" value={form.gender} onChange={handleChange}>
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div className="admin-form-group">
+                <label>Date of Birth</label>
+                <input type="date" name="dob" value={form.dob} onChange={handleChange} />
+              </div>
+              <div className="admin-form-group">
+                <label>Age (Auto-calculated)</label>
+                <input name="age" value={form.age} readOnly style={{ backgroundColor: '#f8f9fa' }} />
+              </div>
+            </div>
+            <div className="admin-form-row">
+              <div className="admin-form-group" style={{ flex: 2 }}>
+                <label>Address</label>
+                <input name="address" placeholder="Complete Address" value={form.address} onChange={handleChange} />
+              </div>
+            </div>
+          </div>
 
-            <button onClick={() => setShowAssignModal(false)}>Close</button>
+          {/* Academic Information */}
+          <div className="admin-form-section">
+            <h3 className="section-title">🏫 Academic Information</h3>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Course / Program</label>
+                <select name="course" value={form.course} onChange={handleChange}>
+                  <option value="">Select Course</option>
+                  {courses.map(c => (
+                    <option key={c.id} value={c.code}>{c.name} ({c.code})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="admin-form-group">
+                <label>Year Level</label>
+                <select name="year" value={form.year} onChange={handleChange}>
+                  <option value="">Select Year</option>
+                  {yearLevels.map(y => (
+                    <option key={y.id} value={y.name}>{y.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="admin-form-group">
+                <label>Section</label>
+                <select name="section" value={form.section} onChange={handleChange}>
+                  <option value="">Select Section</option>
+                  {sections
+                    .filter(s => {
+                      const courseMatch = !form.course || s.courseId === courses.find(c => c.code === form.course)?.id;
+                      const yearMatch = !form.year || s.yearLevelId === yearLevels.find(y => y.name === form.year)?.id;
+                      return courseMatch && yearMatch;
+                    })
+                    .map(s => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                </select>
+              </div>
+            </div>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>School Year</label>
+                <select name="schoolYear" value={form.schoolYear} onChange={handleChange}>
+                  {schoolYears.map(sy => (
+                    <option key={sy.id} value={sy.name}>{sy.name} {sy.isActive ? "(Active)" : ""}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="admin-form-group">
+                <label>Semester</label>
+                <select name="semester" value={form.semester} onChange={handleChange}>
+                  {semesters.map(sem => (
+                    <option key={sem.id} value={sem.name}>{sem.name} {sem.isActive ? "(Active)" : ""}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="admin-form-group">
+                <label>Student Status</label>
+                <select name="studentStatus" value={form.studentStatus} onChange={handleChange}>
+                  <option value="Regular">Regular</option>
+                  <option value="Irregular">Irregular</option>
+                  <option value="Transferee">Transferee</option>
+                  <option value="Returning">Returning</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="admin-form-section">
+            <h3 className="section-title">📞 Contact Information</h3>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Email Address *</label>
+                <input type="email" name="email" placeholder="email@example.com" value={form.email} onChange={handleChange} required />
+              </div>
+              <div className="admin-form-group">
+                <label>Contact Number</label>
+                <input name="contactNumber" placeholder="Phone Number" value={form.contactNumber} onChange={handleChange} />
+              </div>
+            </div>
+          </div>
+
+          {/* Guardian Information */}
+          <div className="admin-form-section">
+            <h3 className="section-title">👨‍👩‍👧 Guardian Information (Optional)</h3>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Guardian Name</label>
+                <input name="guardianName" placeholder="Full Name" value={form.guardianName} onChange={handleChange} />
+              </div>
+              <div className="admin-form-group">
+                <label>Relationship</label>
+                <input name="relationship" placeholder="e.g., Mother, Father" value={form.relationship} onChange={handleChange} />
+              </div>
+              <div className="admin-form-group">
+                <label>Guardian Contact</label>
+                <input name="guardianContact" placeholder="Phone Number" value={form.guardianContact} onChange={handleChange} />
+              </div>
+            </div>
+          </div>
+
+          {/* Account Login */}
+          <div className="admin-form-section">
+            <h3 className="section-title">🔐 Account Login</h3>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Username *</label>
+                <input name="username" placeholder="Username" value={form.username} onChange={handleChange} required />
+              </div>
+              <div className="admin-form-group">
+                <label>Password *</label>
+                <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} required />
+              </div>
+              <div className="admin-form-group">
+                <label>Role</label>
+                <input value="Student (Auto-assigned)" disabled style={{ backgroundColor: '#f8f9fa' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* System Fields Info */}
+          <div className="admin-form-section">
+            <h3 className="section-title">⚙️ System Information</h3>
+            <div className="admin-form-row">
+              <div className="admin-form-group">
+                <label>Account Status</label>
+                <select name="accountStatus" value={form.accountStatus} onChange={handleChange}>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Suspended">Suspended</option>
+                </select>
+              </div>
+              {editingIndex !== null && (
+                <>
+                  <div className="admin-form-group">
+                    <label>Date Created</label>
+                    <input value={new Date(form.dateCreated).toLocaleString()} disabled style={{ backgroundColor: '#f8f9fa' }} />
+                  </div>
+                  <div className="admin-form-group">
+                    <label>Created By</label>
+                    <input value={form.createdBy} disabled style={{ backgroundColor: '#f8f9fa' }} />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="admin-form-row" style={{ marginTop: '30px' }}>
+            <button type="button" className="admin-form-button primary" onClick={handleAddOrUpdate} style={{ padding: '12px 24px', fontSize: '16px' }}>
+              {editingIndex !== null ? "💾 Update Student Account" : "➕ Create Student Account"}
+            </button>
+            {editingIndex !== null && (
+              <button type="button" className="admin-form-button secondary" onClick={() => {
+                setEditingIndex(null);
+                setForm({
+                  id: "", firstName: "", lastName: "", middleName: "", gender: "", dob: "", age: "", address: "",
+                  course: "", year: "", section: "", schoolYear: "2025-2026", semester: "1st Semester",
+                  studentStatus: "Regular", email: "", contactNumber: "", guardianName: "", relationship: "",
+                  guardianContact: "", username: "", password: "", accountStatus: "Active", subjects: []
+                });
+              }}>Cancel</button>
+            )}
           </div>
         </div>
-      )}
-
+      </div>
     </div>
   );
 }

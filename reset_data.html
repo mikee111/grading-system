@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Data</title>
+</head>
+<body>
+    <h1>Reset Application Data</h1>
+    <button onclick="resetData()">Reset All Data</button>
+    <button onclick="viewData()">View Current Data</button>
+    <div id="output"></div>
+
+    <script>
+        function resetData() {
+            localStorage.removeItem('gradingSystemData');
+            localStorage.removeItem('studentsData');
+            localStorage.removeItem('subjectsData');
+            localStorage.removeItem('gradesData');
+            localStorage.removeItem('users');
+            document.getElementById('output').innerHTML = '<p style="color: green;">All data reset successfully! Refresh your grading system.</p>';
+        }
+
+        function viewData() {
+            const data = localStorage.getItem('gradingSystemData');
+            const studentsData = localStorage.getItem('studentsData');
+            const subjectsData = localStorage.getItem('subjectsData');
+            const gradesData = localStorage.getItem('gradesData');
+            
+            let output = '<h3>Current Data:</h3>';
+            output += '<p><strong>gradingSystemData:</strong> ' + (data ? data.substring(0, 200) + '...' : 'null') + '</p>';
+            output += '<p><strong>studentsData:</strong> ' + (studentsData || 'null') + '</p>';
+            output += '<p><strong>subjectsData:</strong> ' + (subjectsData || 'null') + '</p>';
+            output += '<p><strong>gradesData:</strong> ' + (gradesData || 'null') + '</p>';
+            
+            document.getElementById('output').innerHTML = output;
+        }
+    </script>
+</body>
+</html>

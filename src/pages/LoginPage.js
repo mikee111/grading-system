@@ -10,9 +10,14 @@ function LoginPage() {
     password: "",
   });
   const [error, setError] = useState("");
-  const { login } = useData();
+  const { login, users } = useData();
   const { setShowLogin } = useFormVisibility();
   const navigate = useNavigate();
+
+  const showDebugInfo = () => {
+    const info = (users || []).map(u => `• ${u.username} (${u.role})`).join('\n');
+    alert(`Registered Users:\n\n${info || 'No users found'}`);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,12 +30,22 @@ function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
-    const user = login(formData.email, formData.password);
+    const result = login(formData.email, formData.password);
+    
+    // Check if result is an object with success property (for inactive accounts)
+    if (result && result.success === false) {
+      setError(result.message);
+      return;
+    }
+
+    const user = result;
     if (user) {
       if (user.role === "admin") {
         navigate("/admin");
       } else if (user.role === "teacher") {
         navigate("/teacher");
+      } else if (user.role === "student") {
+        navigate("/student");
       } else {
         setShowLogin(false);
       }
@@ -44,9 +59,9 @@ function LoginPage() {
       <form className="auth-form" onSubmit={handleSubmit}>
         <h2>Login</h2>
         <div className="admin-form-group">
-          <label>Email:</label>
+          <label>Email or Username:</label>
           <input
-            type="email"
+            type="text"
             name="email"
             value={formData.email}
             onChange={handleChange}
@@ -68,6 +83,22 @@ function LoginPage() {
           Login
         </button>
 
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <button 
+            type="button" 
+            onClick={showDebugInfo}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: '#888', 
+              textDecoration: 'underline', 
+              cursor: 'pointer',
+              fontSize: '0.75rem'
+            }}
+          >
+            Need help with your credentials?
+          </button>
+        </div>
       </form>
     </div>
   );

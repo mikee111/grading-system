@@ -5,7 +5,7 @@ import { useData } from '../context/DataContext';
 import './MultiStepSignupPage.css';
 
 function MultiStepSignupPage() {
-  const { signUp } = useData();
+  const { signUp, courses, yearLevels, sections, roles } = useData();
   const { setShowSignup, setShowLogin } = useFormVisibility();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -19,6 +19,9 @@ function MultiStepSignupPage() {
     address: '',
     phoneNumber: '',
     role: 'student',
+    course: '',
+    yearLevel: '',
+    section: ''
   });
   const [error, setError] = useState('');
 
@@ -52,11 +55,9 @@ function MultiStepSignupPage() {
       form.firstName,
       form.lastName,
       form.email,
-      form.username,
       form.password,
-      form.address,
-      form.phoneNumber,
-      form.role
+      form.role,
+      form.username
     );
     if (success) {
       setShowSignup(false);
@@ -164,12 +165,43 @@ function MultiStepSignupPage() {
             <label>
               Role:
               <select name="role" value={form.role} onChange={handleChange}>
-                <option value="admin">Admin</option>
-                <option value="staff">Staff</option>
-                <option value="teacher">Teacher</option>
-                <option value="student">Student</option>
+                {roles.filter(r => r.status === "Active").map(role => (
+                  <option key={role.id} value={role.name.toLowerCase()}>{role.name}</option>
+                ))}
               </select>
             </label>
+
+            {form.role === 'student' && (
+              <>
+                <label>
+                  Course:
+                  <select name="course" value={form.course} onChange={handleChange}>
+                    <option value="">Select Course</option>
+                    {courses.map(c => <option key={c.id} value={c.code}>{c.name}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Year Level:
+                  <select name="yearLevel" value={form.yearLevel} onChange={handleChange}>
+                    <option value="">Select Year Level</option>
+                    {yearLevels.map(y => <option key={y.id} value={y.name}>{y.name}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Section:
+                  <select name="section" value={form.section} onChange={handleChange}>
+                    <option value="">Select Section</option>
+                    {sections
+                      .filter(s => {
+                        const courseMatch = !form.course || s.courseId === courses.find(c => c.code === form.course)?.id;
+                        const yearMatch = !form.yearLevel || s.yearLevelId === yearLevels.find(y => y.name === form.yearLevel)?.id;
+                        return courseMatch && yearMatch;
+                      })
+                      .map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                  </select>
+                </label>
+              </>
+            )}
           </div>
         )}
         {error && <p className="error-message">{error}</p>}
