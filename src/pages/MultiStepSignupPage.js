@@ -57,7 +57,12 @@ function MultiStepSignupPage() {
       form.email,
       form.password,
       form.role,
-      form.username
+      form.username,
+      {
+        course: form.course,
+        yearLevel: form.yearLevel,
+        section: form.section
+      }
     );
     if (success) {
       setShowSignup(false);

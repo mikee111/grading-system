@@ -26,11 +26,20 @@ export function DataProvider({ children }) {
       { id: "s2", firstName: "Jane", lastName: "Smith", course: "Biology", year: "2nd Year", section: "A" },
       { id: "s3", firstName: "Alice", lastName: "Brown", course: "Engineering", year: "1st Year", section: "B" },
       { id: "s-john-cruzin", firstName: "John Viray", lastName: "Cruzin", course: "BSIT", year: "BSIT 4", section: "Section 3" },
+      { id: "s-mikee", firstName: "Mikee", lastName: "User", course: "BSIT", year: "1st Year", section: "A" },
+      { id: "s-clarenz", firstName: "Clarenz", lastName: "User", course: "BSIT", year: "1st Year", section: "A" },
     ];
     
     // Ensure John Cruzin is ALWAYS present
     if (!list.some(s => s.id === "s-john-cruzin")) {
       list.push({ id: "s-john-cruzin", firstName: "John Viray", lastName: "Cruzin", course: "BSIT", year: "BSIT 4", section: "Section 3", accountStatus: "Active" });
+    }
+    // Ensure Mikee and Clarenz exist
+    if (!list.some(s => s.id === "s-mikee")) {
+      list.push({ id: "s-mikee", firstName: "Mikee", lastName: "User", course: "BSIT", year: "1st Year", section: "A", accountStatus: "Active" });
+    }
+    if (!list.some(s => s.id === "s-clarenz")) {
+      list.push({ id: "s-clarenz", firstName: "Clarenz", lastName: "User", course: "BSIT", year: "1st Year", section: "A", accountStatus: "Active" });
     }
     return list;
   });
@@ -38,9 +47,12 @@ export function DataProvider({ children }) {
   const [subjects, setSubjects] = useState(() => {
     if (Array.isArray(initialData.subjects)) return initialData.subjects;
     return [
-      { id: "sub-it107", name: "IT 107", gradeLevel: "BSIT 4", course: "BSIT", section: "Section 3", teacherName: "teacher" },
-      { id: "sub1", name: "Mathematics", gradeLevel: "3rd Year", course: "Computer Science", yearLevel: "3rd Year", teacherName: "polcruz" },
-      { id: "sub2", name: "Science", gradeLevel: "2nd Year", course: "Biology", yearLevel: "2nd Year", teacherName: "mariaclara" }
+      { id: "sub-it107", code: "IT 107", name: "Information Tech 1", schedule: "MWF 8:00AM - 9:30AM", gradeLevel: "BSIT 4", course: "BSIT", section: "Section 3", teacherName: "teacher" },
+      { id: "sub1", code: "MATH 101", name: "Advanced Mathematics", schedule: "TTh 10:00AM - 11:30AM", gradeLevel: "3rd Year", course: "Computer Science", yearLevel: "3rd Year", teacherName: "polcruz" },
+      { id: "sub2", code: "SCI 102", name: "General Science", schedule: "Fri 1:00PM - 4:00PM", gradeLevel: "2nd Year", course: "Biology", yearLevel: "2nd Year", teacherName: "mariaclara" },
+      // Enlistment examples
+      { id: "sub-it301", code: "IT301", name: "Web Systems", units: 3, schedule: "MWF 9:00AM - 10:00AM", gradeLevel: "3rd Year", course: "BSIT", yearLevel: "3rd Year", capacity: 30, teacherName: "teacher" },
+      { id: "sub-it302", code: "IT302", name: "Data Analytics", units: 3, schedule: "TTH 1:00PM - 3:00PM", gradeLevel: "3rd Year", course: "BSIT", yearLevel: "3rd Year", capacity: 30, teacherName: "teacher" }
     ];
   });
 
@@ -199,6 +211,28 @@ export function DataProvider({ children }) {
       lastLogin: null,
       accountStatus: "Active"
     };
+    const mikeeStudent = {
+      id: "s-mikee",
+      firstName: "Mikee",
+      lastName: "User",
+      email: "mikee@example.com",
+      username: "mikee",
+      password: "123",
+      role: "student",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
+    const clarenzStudent = {
+      id: "s-clarenz",
+      firstName: "Clarenz",
+      lastName: "User",
+      email: "clarenz@gmail.com",
+      username: "clarenz",
+      password: "123",
+      role: "student",
+      lastLogin: null,
+      accountStatus: "Active"
+    };
 
     const withDefaults = [...loadedUsers];
     if (!withDefaults.some((user) => user.id === "admin1")) {
@@ -218,6 +252,12 @@ export function DataProvider({ children }) {
     }
     if (!withDefaults.some((user) => user.id === "s-john-cruzin")) {
       withDefaults.push(johnCruzin);
+    }
+    if (!withDefaults.some((user) => user.id === "s-mikee")) {
+      withDefaults.push(mikeeStudent);
+    }
+    if (!withDefaults.some((user) => user.id === "s-clarenz")) {
+      withDefaults.push(clarenzStudent);
     }
     return withDefaults;
   });
@@ -285,6 +325,12 @@ export function DataProvider({ children }) {
     return assignments;
   });
 
+  // Enlistment status per studentId: "Pending" | "Approved" | "Rejected"
+  const [enlistmentStatuses, setEnlistmentStatuses] = useState(() => {
+    const fromStorage = initialData.enlistmentStatuses;
+    return (fromStorage && typeof fromStorage === "object") ? fromStorage : {};
+  });
+
   const [currentUser, setCurrentUser] = useState(() => initialData.currentUser || null);
   const [isLoading, setIsLoading] = useState(false); // No longer loading as we read directly in state init
 
@@ -303,6 +349,7 @@ export function DataProvider({ children }) {
         if (data.teacherAssignments) setTeacherAssignments(data.teacherAssignments);
         if (Array.isArray(data.users)) setUsers(data.users);
         if (Array.isArray(data.roles)) setRoles(data.roles);
+        if (data.enlistmentStatuses) setEnlistmentStatuses(data.enlistmentStatuses);
       }
     };
 
@@ -318,10 +365,16 @@ export function DataProvider({ children }) {
       JSON.stringify({ 
         students, subjects, enrollments, users, currentUser, 
         teacherAssignments, activities, courses, yearLevels, 
-        sections, schoolYears, semesters, roles 
+        sections, schoolYears, semesters, roles, enlistmentStatuses
       })
     );
-  }, [students, subjects, enrollments, users, currentUser, teacherAssignments, activities, courses, yearLevels, sections, schoolYears, semesters, roles]);
+  }, [students, subjects, enrollments, users, currentUser, teacherAssignments, activities, courses, yearLevels, sections, schoolYears, semesters, roles, enlistmentStatuses]);
+
+  const setEnlistmentStatus = useCallback((studentId, status) => {
+    const allowed = ["Pending", "Approved", "Rejected"];
+    const normalized = allowed.includes(status) ? status : "Pending";
+    setEnlistmentStatuses((prev) => ({ ...prev, [studentId]: normalized }));
+  }, []);
 
   const assignTeacherToSubject = useCallback((teacherId, subjectId) => {
     setTeacherAssignments((prev) => {
@@ -588,7 +641,7 @@ export function DataProvider({ children }) {
     addActivity(`${teacherName} encoded grades for ${subject.name} - ${subject.gradeLevel || "N/A"}`, "grade_encoded");
   }, [toEquivalent, addActivity, currentUser]);
 
-  const signUp = useCallback((firstName, lastName, email, password, role = "admin", username = null) => {
+  const signUp = useCallback((firstName, lastName, email, password, role = "admin", username = null, extras = {}) => {
     const emailTrimmed = (email || "").toString().trim().toLowerCase();
     const usernameTrimmed = (username || "").toString().trim().toLowerCase();
     const passTrimmed = (password || "").toString().trim();
@@ -617,10 +670,30 @@ export function DataProvider({ children }) {
       role: roleTrimmed, 
       username: usernameTrimmed || emailTrimmed, 
       lastLogin: null,
-      accountStatus: "Active"
+      accountStatus: "Active",
+      course: extras.course || "",
+      year: extras.yearLevel || "",
+      section: extras.section || ""
     };
 
     setUsers((prev) => [...prev, user]);
+
+    // If the new account is a student, also ensure a corresponding student profile entry exists
+    if (roleTrimmed === "student") {
+      const studentProfile = {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        course: user.course || "",
+        year: user.year || "",
+        section: user.section || "",
+        accountStatus: "Active"
+      };
+      setStudents((prev) => {
+        if (prev.some(s => s.id === studentProfile.id)) return prev;
+        return [...prev, studentProfile];
+      });
+    }
 
     // Explicitly sync to localStorage
     try {
@@ -633,9 +706,27 @@ export function DataProvider({ children }) {
         existingUsers.push(user);
       }
       
+      // Also persist student profile if applicable
+      let existingStudents = Array.isArray(data.students) ? data.students : [];
+      if (roleTrimmed === "student" && !existingStudents.some(s => s.id === user.id)) {
+        existingStudents = [
+          ...existingStudents,
+          {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            course: user.course || "",
+            year: user.year || "",
+            section: user.section || "",
+            accountStatus: "Active"
+          }
+        ];
+      }
+
       const dataToSave = {
         ...data,
-        users: existingUsers
+        users: existingUsers,
+        students: existingStudents
       };
       
       localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
@@ -741,7 +832,33 @@ export function DataProvider({ children }) {
     
     // Update state based on role
     if (foundUser.role === "student") {
-      setStudents((prev) => prev.map(s => s.id === foundUser.id ? updatedUser : s));
+      setStudents((prev) => {
+        const existsIdx = prev.findIndex(s => s.id === foundUser.id);
+        if (existsIdx !== -1) {
+          const copy = [...prev];
+          copy[existsIdx] = {
+            ...prev[existsIdx],
+            firstName: updatedUser.firstName || prev[existsIdx].firstName,
+            lastName: updatedUser.lastName || prev[existsIdx].lastName,
+            course: updatedUser.course || prev[existsIdx].course || "",
+            year: updatedUser.year || prev[existsIdx].year || "",
+            section: updatedUser.section || prev[existsIdx].section || "",
+          };
+          return copy;
+        }
+        return [
+          ...prev,
+          {
+            id: updatedUser.id,
+            firstName: updatedUser.firstName || "",
+            lastName: updatedUser.lastName || "",
+            course: updatedUser.course || "",
+            year: updatedUser.year || "",
+            section: updatedUser.section || "",
+            accountStatus: "Active"
+          }
+        ];
+      });
     } else {
       setUsers((prev) => {
         const idx = prev.findIndex(u => u.id === foundUser.id);
@@ -786,6 +903,9 @@ export function DataProvider({ children }) {
               lastName: profileData.lastName,
               email: profileData.email,
               username: u.username || profileData.email,
+              phoneNumber: profileData.phoneNumber !== undefined ? profileData.phoneNumber : u.phoneNumber,
+              address: profileData.address !== undefined ? profileData.address : u.address,
+              profilePhoto: profileData.profilePhoto !== undefined ? profileData.profilePhoto : u.profilePhoto,
             }
           : u
       )
@@ -799,6 +919,9 @@ export function DataProvider({ children }) {
         lastName: profileData.lastName,
         email: profileData.email,
         username: prev.username || profileData.email,
+        phoneNumber: profileData.phoneNumber !== undefined ? profileData.phoneNumber : prev.phoneNumber,
+        address: profileData.address !== undefined ? profileData.address : prev.address,
+        profilePhoto: profileData.profilePhoto !== undefined ? profileData.profilePhoto : prev.profilePhoto,
       };
     });
   }, []);
@@ -960,6 +1083,8 @@ export function DataProvider({ children }) {
       updateRole,
       deleteRole,
       toggleRoleStatus,
+      enlistmentStatuses,
+      setEnlistmentStatus,
     }),
     [
       students, subjects, courses, yearLevels, sections, schoolYears, semesters,
@@ -971,7 +1096,8 @@ export function DataProvider({ children }) {
       removeTeacherFromSubject, enrollSubject, enrollStudentsInSubject, removeEnrollment, setGrade, 
       saveGradeRecord, availableSubjectsFor, signUp, deleteUser, updateUser, updateUserRole, resetPasswordByAdmin, claimSubject, 
       login, logout, updateUserProfile, changePassword, updateUserRole, 
-      isLoading, refreshData, activities, addActivity, addRole, updateRole, deleteRole, toggleRoleStatus
+      isLoading, refreshData, activities, addActivity, addRole, updateRole, deleteRole, toggleRoleStatus,
+      enlistmentStatuses, setEnlistmentStatus
     ]
   );
 
