@@ -107,6 +107,39 @@ function StudentDashboard() {
   const gradesTotal = useMemo(() => studentEnrollments.length, [studentEnrollments]);
   const [hoveredItem, setHoveredItem] = useState(null);
 
+  const [notifications, setNotifications] = useState(() => [
+    {
+      id: "n-1",
+      type: "Enlistment Status",
+      title: "Enlistment Status Updated",
+      message: "Your enlistment has been approved for the current semester.",
+      status: "Approved",
+      createdAt: "2025-02-15 09:24 AM",
+      read: false
+    },
+    {
+      id: "n-2",
+      type: "Grade Posted",
+      title: "New Grade Posted",
+      message: "Your final grade in IT301 Web Systems has been posted.",
+      createdAt: "2025-02-14 03:45 PM",
+      read: false
+    },
+    {
+      id: "n-3",
+      type: "Admin Announcement",
+      title: "System Maintenance",
+      message: "Portal will be unavailable on Sunday 10:00 PM - 12:00 MN.",
+      createdAt: "2025-02-13 08:10 AM",
+      read: true
+    }
+  ]);
+
+  const unreadNotifications = useMemo(
+    () => notifications.filter(n => !n.read),
+    [notifications]
+  );
+
   const [email, setEmail] = useState(currentUser?.email || "");
   const [phoneNumber, setPhoneNumber] = useState(currentUser?.phoneNumber || "");
   const [address, setAddress] = useState(currentUser?.address || "");
@@ -197,6 +230,16 @@ function StudentDashboard() {
       else next.add(id);
       return next;
     });
+  };
+
+  const markNotificationRead = (id) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+    );
+  };
+
+  const markAllNotificationsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
   const SummaryItem = ({ label, value, icon, accent }) => (
@@ -598,6 +641,132 @@ function StudentDashboard() {
       );
     }
 
+    if (activeView === "notifications") {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <div style={{ fontSize: 14, opacity: 0.75 }}>
+              You have {unreadNotifications.length} unread notification{unreadNotifications.length !== 1 ? "s" : ""}.
+            </div>
+            <button
+              type="button"
+              onClick={markAllNotificationsRead}
+              disabled={unreadNotifications.length === 0}
+              style={{
+                padding: "6px 12px",
+                borderRadius: 999,
+                border: "1px solid #e5e7eb",
+                background: unreadNotifications.length === 0 ? "#f3f4f6" : "#ecfdf5",
+                color: unreadNotifications.length === 0 ? "#9ca3af" : "#047857",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: unreadNotifications.length === 0 ? "not-allowed" : "pointer"
+              }}
+            >
+              Mark all as read
+            </button>
+          </div>
+
+          {notifications.length === 0 && (
+            <div style={{ padding: 24, borderRadius: 10, border: "1px dashed #d1fae5", background: "#f0fdf4", textAlign: "center", fontSize: 14 }}>
+              No notifications yet.
+            </div>
+          )}
+
+          {notifications.map(notification => {
+            const isUnread = !notification.read;
+            let accentBg = "#e5e7eb";
+            let accentColor = "#374151";
+            if (notification.type === "Enlistment Status") {
+              accentBg = notification.status === "Rejected" ? "#fef2f2" : "#ecfdf5";
+              accentColor = notification.status === "Rejected" ? "#b91c1c" : "#047857";
+            } else if (notification.type === "Grade Posted") {
+              accentBg = "#eff6ff";
+              accentColor = "#1d4ed8";
+            } else if (notification.type === "Admin Announcement") {
+              accentBg = "#fffbeb";
+              accentColor = "#b45309";
+            }
+
+            return (
+              <div
+                key={notification.id}
+                style={{
+                  display: "flex",
+                  gap: 12,
+                  padding: 14,
+                  borderRadius: 12,
+                  border: "1px solid #e5e7eb",
+                  background: isUnread ? "#f9fafb" : "#ffffff",
+                  alignItems: "flex-start"
+                }}
+              >
+                <div style={{ marginTop: 6, marginRight: 4 }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: isUnread ? "#ef4444" : "#e5e7eb"
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                    <div style={{ fontSize: 14, fontWeight: isUnread ? 700 : 600, color: "#065f46" }}>
+                      {notification.title}
+                    </div>
+                    <div style={{ fontSize: 11, color: "#6b7280" }}>
+                      {notification.createdAt}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 8, fontSize: 13, color: "#374151", fontWeight: isUnread ? 500 : 400 }}>
+                    {notification.message}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        background: accentBg,
+                        color: accentColor,
+                        textTransform: "uppercase",
+                        letterSpacing: 0.4
+                      }}
+                    >
+                      {notification.type}
+                      {notification.type === "Enlistment Status" && notification.status ? ` • ${notification.status}` : ""}
+                    </div>
+                    {!notification.read && (
+                      <button
+                        type="button"
+                        onClick={() => markNotificationRead(notification.id)}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 999,
+                          border: "1px solid #10b981",
+                          background: "#ecfdf5",
+                          color: "#047857",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: "pointer"
+                        }}
+                      >
+                        Mark as Read
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
     return (
       <div style={{ fontSize: 14, opacity: 0.8 }}>
         Content planned. No forms here. This section will be implemented later.
@@ -702,6 +871,21 @@ function StudentDashboard() {
                 textAlign: "center"
               }}>
                 {gradesCompleted}/{gradesTotal || 0}
+              </span>
+            )}
+            {item.key === "notifications" && unreadNotifications.length > 0 && (
+              <span style={{
+                padding: "2px 8px",
+                borderRadius: 999,
+                fontSize: 11,
+                fontWeight: 800,
+                background: "#b91c1c",
+                color: "#fee2e2",
+                border: "1px solid #fecaca",
+                minWidth: 24,
+                textAlign: "center"
+              }}>
+                {unreadNotifications.length}
               </span>
             )}
           </button>
